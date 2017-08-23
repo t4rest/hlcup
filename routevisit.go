@@ -99,7 +99,7 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 
 	id64, err := strconv.ParseInt(strId, 10, 32)
 	if err != nil {
-		ctx.Error("", fasthttp.StatusBadRequest)
+		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 

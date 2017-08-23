@@ -1,11 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
 	"highload/models"
 	"strconv"
-	"encoding/json"
 )
 
 //get user by id
@@ -21,7 +21,7 @@ func GetUser(ctx *fasthttp.RequestCtx) {
 
 	id64, err := strconv.ParseInt(strId, 10, 32)
 	if err != nil {
-		ctx.Error("", fasthttp.StatusBadRequest)
+		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
@@ -42,7 +42,7 @@ func GetUser(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 	response, err := easyjson.Marshal(user)
 	if err != nil {
-		ctx.Error("", fasthttp.StatusNotFound)
+		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
@@ -73,7 +73,6 @@ func CreateUser(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-
 	models.SetUser(user)
 
 	ctx.SetContentType("application/json;charset=utf-8")
@@ -89,6 +88,7 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 
 	if param == nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
+		return
 	}
 
 	if param == "new" {
@@ -121,7 +121,6 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
-
 
 	var params map[string]interface{}
 

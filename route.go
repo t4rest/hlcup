@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"github.com/valyala/fasthttp"
 	"highload/models"
 	"strconv"
@@ -51,7 +50,7 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 
 	var gender = (string)(ctx.QueryArgs().Peek("gender"))
 
-	var avg float32 = 0
+	var avg models.VisitAvg
 	var conditions []models.Condition
 
 	id, err = strconv.Atoi(ctx.UserValue("id").(string))
@@ -133,9 +132,9 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	response, err := json.Marshal(map[string]interface{}{"avg": models.FloatPrecision5(avg)})
+	response, err := easyjson.Marshal(avg)
 	if err != nil {
-		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
+		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 

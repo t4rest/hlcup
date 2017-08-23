@@ -1,4 +1,4 @@
-SET PASSWORD FOR 'root'@'localhost' = PASSWORD('1234');
+SET PASSWORD FOR 'root'@'localhost' = PASSWORD('123');
 
 -- --------------------------------------------------------
 -- Хост:                         127.0.0.1

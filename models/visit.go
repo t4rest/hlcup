@@ -158,9 +158,11 @@ func ValidatVsitParams(params map[string]interface{}, scenario string) (result b
 	return true
 }
 
-func GetAverage(conditions []Condition) (average float32, err error) {
+func GetAverage(conditions []Condition) (VisitAvg, error) {
 	var query string
 	var conditionString string
+	var visitAvg VisitAvg
+	var average float32
 
 	// where
 	if len(conditions) > 0 {
@@ -178,9 +180,17 @@ func GetAverage(conditions []Condition) (average float32, err error) {
 
 	query = fmt.Sprintf("select round(avg(mark), 5) from visits %s", conditionString)
 
+	fmt.Println(query)
+
 	err = db.QueryRow(query).Scan(&average)
 
-	return
+	if err != nil {
+		return visitAvg, err
+	}
+
+	visitAvg = VisitAvg{Avg: average}
+
+	return visitAvg, nil
 }
 
 func SelectVisits(conditions []Condition, sort Sort) (UserVisitsSl, error) {
@@ -188,7 +198,7 @@ func SelectVisits(conditions []Condition, sort Sort) (UserVisitsSl, error) {
 	var conditionString string
 	var sortString string
 	var userVisitsSl UserVisitsSl
-	var userVisits []UserVisit
+	var userVisits []UserVisit = []UserVisit{}
 
 	// where
 	if len(conditions) > 0 {
@@ -242,7 +252,7 @@ func SelectVisits(conditions []Condition, sort Sort) (UserVisitsSl, error) {
 		userVisits = append(userVisits, r)
 	}
 
-	userVisitsSl = UserVisitsSl{Visits:userVisits}
+	userVisitsSl = UserVisitsSl{Visits: userVisits}
 
 	return userVisitsSl, nil
 }
@@ -309,6 +319,8 @@ func UpdateVisit(visit Visit, params map[string]interface{}, conditions []Condit
 	}
 
 	query = fmt.Sprintf("update visits set %s %s", setString, conditionString)
+
+	fmt.Println(query)
 
 	stmtIns, err := db.Prepare(query)
 

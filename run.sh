@@ -12,4 +12,4 @@ sleep 10
 #mysql -u root < echo "SET PASSWORD FOR 'root'@'localhost' = PASSWORD(1234);"
 mysql -u root < go/src/highload/storage/scheme.sql
 
-./go/bin/highload 80 data
+./highload

@@ -23,7 +23,7 @@ func main() {
 	router.GET("/locations/:id", GetLocation)
 	router.POST("/locations/:id", UpdateLocation)
 
-	router.GET("/visits/:id/", GetVisit)
+	router.GET("/visits/:id", GetVisit)
 	router.POST("/visits/:id", UpdateVisit)
 
 	router.GET("/users/:id/visits", Visits)
