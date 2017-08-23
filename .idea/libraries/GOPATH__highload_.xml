@@ -1,0 +1,39 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;highload&gt;">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../frontend" />
+      <root url="file://$PROJECT_DIR$/../highloadcup_tester" />
+      <root url="file://$PROJECT_DIR$/../hlcupdocs" />
+      <root url="file://$PROJECT_DIR$/../crashci" />
+      <root url="file://$PROJECT_DIR$/../highloadcup2017" />
+      <root url="file://$PROJECT_DIR$/../t4rest" />
+      <root url="file://$PROJECT_DIR$/../golang.org" />
+      <root url="file://$PROJECT_DIR$/../gopkg.in" />
+      <root url="file://$PROJECT_DIR$/../github.com" />
+      <root url="file://$PROJECT_DIR$/../slackt4rest" />
+      <root url="file://$PROJECT_DIR$/../lessons" />
+      <root url="file://$PROJECT_DIR$/../superstellar" />
+      <root url="file://$PROJECT_DIR$/../telegramt4rest" />
+      <root url="file://$PROJECT_DIR$/../edvce" />
+    </CLASSES>
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../frontend" />
+      <root url="file://$PROJECT_DIR$/../highloadcup_tester" />
+      <root url="file://$PROJECT_DIR$/../hlcupdocs" />
+      <root url="file://$PROJECT_DIR$/../crashci" />
+      <root url="file://$PROJECT_DIR$/../highloadcup2017" />
+      <root url="file://$PROJECT_DIR$/../t4rest" />
+      <root url="file://$PROJECT_DIR$/../golang.org" />
+      <root url="file://$PROJECT_DIR$/../gopkg.in" />
+      <root url="file://$PROJECT_DIR$/../github.com" />
+      <root url="file://$PROJECT_DIR$/../slackt4rest" />
+      <root url="file://$PROJECT_DIR$/../lessons" />
+      <root url="file://$PROJECT_DIR$/../superstellar" />
+      <root url="file://$PROJECT_DIR$/../telegramt4rest" />
+      <root url="file://$PROJECT_DIR$/../edvce" />
+    </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>
