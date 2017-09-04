@@ -178,7 +178,7 @@ func GetAverage(conditions []Condition) (VisitAvg, error) {
 		conditionString += fmt.Sprintf("%s %s %s ", condition.Param, condition.Operator, condition.Value)
 	}
 
-	query = fmt.Sprintf("select round(avg(mark), 5) from visits %s", conditionString)
+	query = fmt.Sprintf("select round(avg(mark), 5) as average from visits %s", conditionString)
 
 	fmt.Println(query)
 
