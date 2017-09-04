@@ -9,9 +9,15 @@ import (
 )
 
 func ImportDataFromZip() error {
-	r, err := zip.OpenReader("/tmp/data/data.zip")
+	var r *zip.ReadCloser
+	var err error
+	r, err = zip.OpenReader("/tmp/data/data.zip")
 	if err != nil {
-		return err
+		r, err = zip.OpenReader("/Users/admin/go/src/hlcupdocs/data/TRAIN/data/data.zip")
+
+		if err != nil {
+			return err
+		}
 	}
 	defer r.Close()
 

@@ -66,7 +66,7 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 	}
 
 	idCondition := models.Condition{
-		Param:         "visit.location",
+		Param:         "location",
 		Value:         strconv.Itoa(id),
 		Operator:      "=",
 		JoinCondition: "and",
@@ -100,7 +100,7 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 
 	if fromAge > 0 {
 		conditions = append(conditions, models.Condition{
-			Param:         "user.birth_date ",
+			Param:         "birth_date ",
 			Value:         strconv.Itoa(int(time.Now().AddDate(-fromAge, 0, 0).Unix())),
 			Operator:      "<",
 			JoinCondition: "and",
@@ -109,7 +109,7 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 
 	if toAge > 0 {
 		conditions = append(conditions, models.Condition{
-			Param:         "user.birth_date ",
+			Param:         "birth_date ",
 			Value:         strconv.Itoa(int(time.Now().AddDate(-toAge, 0, 0).Unix())),
 			Operator:      ">",
 			JoinCondition: "and",
@@ -118,7 +118,7 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 
 	if len(gender) > 0 {
 		conditions = append(conditions, models.Condition{
-			Param:         "user.gender ",
+			Param:         "gender ",
 			Value:         "'" + gender + "'",
 			Operator:      "=",
 			JoinCondition: "and",
@@ -241,7 +241,7 @@ func Visits(ctx *fasthttp.RequestCtx) {
 	visits, err = models.SelectVisits(conditions, models.Sort{Fields: []string{"visited_at"}, Direction: "asc"})
 
 	if err == sql.ErrNoRows {
-		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
+		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
