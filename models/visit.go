@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"github.com/pkg/errors"
 )
 
 type Visit struct {
@@ -41,15 +42,15 @@ func init() {
 }
 
 func SetVisit(visit Visit) {
-	mutexVisit.RLock()
-	defer mutexVisit.RUnlock()
+	mutexVisit.Lock()
+	defer mutexVisit.Unlock()
 
 	visitMap[visit.ID] = visit
 }
 
 func GetVisit(id int32) (Visit, error) {
-	//mutexVisit.RLock()
-	//defer mutexVisit.RUnlock()
+	mutexVisit.RLock()
+	defer mutexVisit.RUnlock()
 
 	visit, ok := visitMap[id]
 
@@ -150,9 +151,9 @@ func ValidatVsitParams(params map[string]interface{}, scenario string) (result b
 			return false
 		}
 
-		if !StringInSlice(param, GetUserFields()) {
-			return false
-		}
+		//if !StringInSlice(param, GetUserFields()) {
+		//	return false
+		//}
 	}
 
 	return true
@@ -179,8 +180,6 @@ func GetAverage(conditions []Condition) (VisitAvg, error) {
 	}
 
 	query = fmt.Sprintf("select round(avg(mark), 5) as average from visits %s", conditionString)
-
-	fmt.Println(query)
 
 	err = db.QueryRow(query).Scan(&average)
 
@@ -227,8 +226,6 @@ func SelectVisits(conditions []Condition, sort Sort) (UserVisitsSl, error) {
 
 	query = fmt.Sprintf("select mark, visited_at, location from visits %s %s", conditionString, sortString)
 
-	fmt.Println(query)
-
 	rows, err := db.Query(query)
 
 	if err != nil {
@@ -257,9 +254,9 @@ func SelectVisits(conditions []Condition, sort Sort) (UserVisitsSl, error) {
 	return userVisitsSl, nil
 }
 
-func UpdateVisit(visit Visit, params map[string]interface{}, conditions []Condition) (rowsAffected int64, err error) {
+func UpdateVisit(visit Visit, params map[string]interface{}, conditions []Condition) (int64, error) {
 	if len(params) < 1 {
-		return
+		return 0, errors.New("error")
 	}
 
 	var query string
@@ -280,56 +277,66 @@ func UpdateVisit(visit Visit, params map[string]interface{}, conditions []Condit
 		conditionString += fmt.Sprintf("%s %s %s", condition.Param, condition.Operator, condition.Value)
 	}
 
-	setString += fmt.Sprintf("%s = ?", "location")
-	values = append(values, params["location"])
-
-	setString += ","
-
-	setString += fmt.Sprintf("%s = ?", "user")
-	values = append(values, params["user"])
-
-	setString += ","
-
-	setString += fmt.Sprintf("%s = ?", "visited_at")
-	values = append(values, params["visited_at"])
-
-	setString += ","
-
-	setString += fmt.Sprintf("%s = ?", "mark")
-	values = append(values, params["mark"])
-
 	location, ok := params["location"].(int32)
 	if ok {
 		visit.LocationID = location
+
+		setString += fmt.Sprintf("%s = ?", "location")
+		values = append(values, location)
 	}
 
 	user, ok := params["user"].(int32)
 	if ok {
 		visit.UserID = user
+
+		if len(setString) != 0 {
+			setString += ","
+		}
+
+		setString += fmt.Sprintf("%s = ?", "user")
+		values = append(values, user)
+
 	}
 
 	visitedAt, ok := params["visited_at"].(int)
 	if ok {
 		visit.VisitedAt = visitedAt
+
+		if len(setString) != 0 {
+			setString += ","
+		}
+
+		setString += fmt.Sprintf("%s = ?", "visited_at")
+		values = append(values, visitedAt)
 	}
 
 	mark, ok := params["mark"].(uint8)
 	if ok {
+
+		if len(setString) != 0 {
+			setString += ","
+		}
+
 		visit.Mark = mark
+
+		setString += fmt.Sprintf("%s = ?", "mark")
+		values = append(values, params["mark"])
 	}
 
-	query = fmt.Sprintf("update visits set %s %s", setString, conditionString)
+	if len(setString) != 0 {
+		query = fmt.Sprintf("update visits set %s %s", setString, conditionString)
 
-	fmt.Println(query)
+		stmtIns, err := db.Prepare(query)
 
-	stmtIns, err := db.Prepare(query)
+		if err != nil {
+			return 0, err
+		}
+		defer stmtIns.Close()
 
-	if err != nil {
-		return
+		result, err := stmtIns.Exec(values...)
+
+		return result.RowsAffected()
 	}
-	defer stmtIns.Close()
 
-	result, err := stmtIns.Exec(values...)
-
-	return result.RowsAffected()
+	return 0, nil
 }

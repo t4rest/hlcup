@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"sync"
+	"github.com/pkg/errors"
 )
 
 type User struct {
@@ -28,8 +29,8 @@ func init() {
 }
 
 func SetUser(user User) {
-	mutexUser.RLock()
-	defer mutexUser.RUnlock()
+	mutexUser.Lock()
+	defer mutexUser.Unlock()
 
 	userMap[user.ID] = user
 }
@@ -75,17 +76,17 @@ func ValidateUserParams(params map[string]interface{}, scenario string) (result 
 			return false
 		}
 
-		if !StringInSlice(param, GetUserFields()) {
-			return false
-		}
+		//if !StringInSlice(param, GetUserFields()) {
+		//	return false
+		//}
 	}
 
 	return true
 }
 
-func UpdateUser(user User, params map[string]interface{}, conditions []Condition) (rowsAffected int64, err error) {
+func UpdateUser(user User, params map[string]interface{}, conditions []Condition) (int64, error) {
 	if len(params) < 1 {
-		return
+		return 0, errors.New("error")
 	}
 
 	var query string
@@ -106,14 +107,6 @@ func UpdateUser(user User, params map[string]interface{}, conditions []Condition
 		conditionString += fmt.Sprintf("%s %s %s", condition.Param, condition.Operator, condition.Value)
 	}
 
-	setString += fmt.Sprintf("%s = ?", "gender")
-	values = append(values, params["gender"])
-
-	setString += ","
-
-	setString += fmt.Sprintf("%s = ?", "birth_date")
-	values = append(values, params["birth_date"])
-
 	email, ok := params["email"].(string)
 	if ok {
 		user.Email = email
@@ -132,23 +125,40 @@ func UpdateUser(user User, params map[string]interface{}, conditions []Condition
 	gender, ok := params["gender"].(string)
 	if ok {
 		user.Gender = gender
+
+		setString += fmt.Sprintf("%s = ?", "gender")
+		values = append(values, gender)
 	}
 
 	birthDate, ok := params["birth_date"].(int)
 	if ok {
 		user.BirthDate = birthDate
+
+		if len(setString) != 0 {
+			setString += ","
+		}
+
+		setString += fmt.Sprintf("%s = ?", "birth_date")
+		values = append(values, birthDate)
 	}
 
-	query = fmt.Sprintf("update visits set %s %s", setString, conditionString)
+	if len(setString) != 0 {
 
-	stmtIns, err := db.Prepare(query)
+		query = fmt.Sprintf("update visits set %s %s", setString, conditionString)
 
-	if err != nil {
-		return
+		fmt.Println(query)
+
+		stmtIns, err := db.Prepare(query)
+
+		if err != nil {
+			return 0, err
+		}
+		defer stmtIns.Close()
+
+		result, err := stmtIns.Exec(values...)
+
+		return result.RowsAffected()
 	}
-	defer stmtIns.Close()
 
-	result, err := stmtIns.Exec(values...)
-
-	return result.RowsAffected()
+	return 0, nil
 }

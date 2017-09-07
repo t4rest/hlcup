@@ -13,7 +13,7 @@ func ImportDataFromZip() error {
 	var err error
 	r, err = zip.OpenReader("/tmp/data/data.zip")
 	if err != nil {
-		r, err = zip.OpenReader("/Users/admin/go/src/hlcupdocs/data/TRAIN/data/data.zip")
+		r, err = zip.OpenReader("/home/andrey/go/src/hlcupdoc/data/TRAIN/data/data.zip")
 
 		if err != nil {
 			return err
@@ -55,11 +55,11 @@ func ImportDataFromZip() error {
 
 		switch parts[0] {
 		case "users":
-			err = importUsers(bytes)
+			go importUsers(bytes)
 		case "locations":
-			err = importLocations(bytes)
+			go importLocations(bytes)
 		case "visits":
-			err = importVisits(bytes)
+			go importVisits(bytes)
 		}
 		if err != nil {
 			return err

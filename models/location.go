@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"sync"
+	"github.com/pkg/errors"
 )
 
 type Location struct {
@@ -26,15 +27,15 @@ func init() {
 }
 
 func SetLocation(location Location) {
-	mutexLocation.RLock()
-	defer mutexLocation.RUnlock()
+	mutexLocation.Lock()
+	defer mutexLocation.Unlock()
 
 	locationMap[location.ID] = location
 }
 
 func GetLocation(id int32) (Location, error) {
-	//mutexLocation.RLock()
-	//defer mutexLocation.RUnlock()
+	mutexLocation.RLock()
+	defer mutexLocation.RUnlock()
 
 	location, ok := locationMap[id]
 
@@ -73,17 +74,17 @@ func ValidateLocationParams(params map[string]interface{}, scenario string) (res
 			return false
 		}
 
-		if !StringInSlice(param, GetLocationFields()) {
-			return false
-		}
+		//if !StringInSlice(param, GetLocationFields()) {
+		//	return false
+		//}
 	}
 
 	return true
 }
 
-func UpdateLocation(visit Location, params map[string]interface{}, conditions []Condition) (rowsAffected int64, err error) {
+func UpdateLocation(visit Location, params map[string]interface{}, conditions []Condition) (int64, error) {
 	if len(params) < 1 {
-		return
+		return 0, errors.New("error")
 	}
 
 	var query string
@@ -104,14 +105,6 @@ func UpdateLocation(visit Location, params map[string]interface{}, conditions []
 		conditionString += fmt.Sprintf("%s %s %s", condition.Param, condition.Operator, condition.Value)
 	}
 
-	setString += fmt.Sprintf("%s = ?", "country")
-	values = append(values, params["country"])
-
-	setString += ","
-
-	setString += fmt.Sprintf("%s = ?", "distance")
-	values = append(values, params["distance"])
-
 	place, ok := params["place"].(string)
 	if ok {
 		visit.Place = place
@@ -120,6 +113,9 @@ func UpdateLocation(visit Location, params map[string]interface{}, conditions []
 	country, ok := params["country"].(string)
 	if ok {
 		visit.Country = country
+
+		setString += fmt.Sprintf("%s = ?", "country")
+		values = append(values, country)
 	}
 
 	city, ok := params["city"].(string)
@@ -130,18 +126,31 @@ func UpdateLocation(visit Location, params map[string]interface{}, conditions []
 	distance, ok := params["distance"].(int32)
 	if ok {
 		visit.Distance = distance
+
+		if len(setString) != 0 {
+			setString += ","
+		}
+
+		setString += fmt.Sprintf("%s = ?", "distance")
+		values = append(values, distance)
 	}
 
-	query = fmt.Sprintf("update visits set %s %s", setString, conditionString)
+	if len(setString) != 0 {
 
-	stmtIns, err := db.Prepare(query)
+		query = fmt.Sprintf("update visits set %s %s", setString, conditionString)
+		fmt.Printf(query)
 
-	if err != nil {
-		return
+		stmtIns, err := db.Prepare(query)
+
+		if err != nil {
+			return 0, err
+		}
+		defer stmtIns.Close()
+
+		result, err := stmtIns.Exec(values...)
+
+		return result.RowsAffected()
 	}
-	defer stmtIns.Close()
 
-	result, err := stmtIns.Exec(values...)
-
-	return result.RowsAffected()
+	return 0, nil
 }

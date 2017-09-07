@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
 	"highload/models"
@@ -27,6 +28,7 @@ func GetVisit(ctx *fasthttp.RequestCtx) {
 
 	visit, err := models.GetVisit(id)
 	if err != nil {
+		fmt.Println(err.Error())
 
 		if err == models.NotFound {
 			ctx.Error("", fasthttp.StatusNotFound)
@@ -48,12 +50,15 @@ func GetVisit(ctx *fasthttp.RequestCtx) {
 }
 
 func CreateVisit(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json;charset=utf-8")
+
 	visit := models.Visit{}
 
 	// check params
 	err := easyjson.Unmarshal(ctx.PostBody(), &visit)
 
 	if err != nil {
+		fmt.Println(err.Error())
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
@@ -62,27 +67,31 @@ func CreateVisit(ctx *fasthttp.RequestCtx) {
 
 	err = json.Unmarshal(ctx.PostBody(), &params)
 	if err != nil {
+		fmt.Println(err.Error())
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
 	if !models.ValidatVsitParams(params, "insert") {
+		fmt.Println("visit create validation failed")
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
 	models.InsertVisit(visit)
 
-	ctx.SetContentType("application/json;charset=utf-8")
 	ctx.SetBody([]byte("{}"))
 }
 
 func UpdateVisit(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json;charset=utf-8")
+
 	param := ctx.UserValue("id")
 	var conditions []models.Condition
 	var visit models.Visit
 
 	if param == nil {
+		fmt.Println("visit update param nil")
 		ctx.Error("", fasthttp.StatusBadRequest)
 	}
 
@@ -93,12 +102,15 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 
 	strId, ok := param.(string)
 	if !ok {
+		fmt.Println("visit update id != ok")
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
 	id64, err := strconv.ParseInt(strId, 10, 32)
 	if err != nil {
+		fmt.Println(err.Error())
+
 		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
@@ -107,6 +119,7 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 
 	visit, err = models.GetVisit(id)
 	if err != nil {
+		fmt.Println(err.Error())
 
 		if err == models.NotFound {
 			ctx.Error("", fasthttp.StatusNotFound)
@@ -125,7 +138,10 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	if !models.ValidatVsitParams(params, "insert") {
+	if !models.ValidatVsitParams(params, "update") {
+		fmt.Println("visit update validation failed")
+		fmt.Println(params)
+
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
@@ -140,7 +156,5 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 
 	models.UpdateVisit(visit, params, conditions)
 
-	ctx.SetContentType("application/json;charset=utf-8")
 	ctx.SetBody([]byte("{}"))
-	ctx.SetConnectionClose()
 }
