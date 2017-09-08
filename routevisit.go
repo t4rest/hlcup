@@ -10,6 +10,8 @@ import (
 )
 
 func GetVisit(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json;charset=utf-8")
+
 	param := ctx.UserValue("id")
 	strId, ok := param.(string)
 
@@ -39,7 +41,6 @@ func GetVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	ctx.SetContentType("application/json;charset=utf-8")
 	response, err := easyjson.Marshal(visit)
 	if err != nil {
 		ctx.Error("", fasthttp.StatusNotFound)
@@ -154,7 +155,7 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 	}
 	conditions = append(conditions, userIdCondition)
 
-	models.UpdateVisit(visit, params, conditions)
+	models.UpdateVisit(&visit, params, conditions)
 
 	ctx.SetBody([]byte("{}"))
 }

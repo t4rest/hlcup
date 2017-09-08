@@ -34,11 +34,11 @@ type UserVisitsSl struct {
 }
 
 var visitMap map[int32]Visit
-var mutexVisit *sync.RWMutex
+var mutexVisit *sync.Mutex
 
 func init() {
 	visitMap = make(map[int32]Visit)
-	mutexVisit = &sync.RWMutex{}
+	mutexVisit = &sync.Mutex{}
 }
 
 func SetVisit(visit Visit) {
@@ -49,8 +49,8 @@ func SetVisit(visit Visit) {
 }
 
 func GetVisit(id int32) (Visit, error) {
-	mutexVisit.RLock()
-	defer mutexVisit.RUnlock()
+	mutexVisit.Lock()
+	defer mutexVisit.Unlock()
 
 	visit, ok := visitMap[id]
 
@@ -106,6 +106,9 @@ func InsertVisit(visit Visit) {
 	var location Location
 	valueStrings := make([]string, 0, 5+6)
 	valueArgs := make([]interface{}, 0, (5+6)*5)
+
+	user, _ = GetUser(visit.UserID)
+	location, _ = GetLocation(visit.LocationID)
 
 	valueStrings = append(valueStrings, "(?, ?, ?, ?, ?, ?, ?, ?, ?)")
 
@@ -254,7 +257,7 @@ func SelectVisits(conditions []Condition, sort Sort) (UserVisitsSl, error) {
 	return userVisitsSl, nil
 }
 
-func UpdateVisit(visit Visit, params map[string]interface{}, conditions []Condition) (int64, error) {
+func UpdateVisit(visit *Visit, params map[string]interface{}, conditions []Condition) (int64, error) {
 	if len(params) < 1 {
 		return 0, errors.New("error")
 	}

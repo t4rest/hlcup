@@ -21,11 +21,11 @@ type Users struct {
 }
 
 var userMap map[int32]User
-var mutexUser *sync.RWMutex
+var mutexUser *sync.Mutex
 
 func init() {
 	userMap = make(map[int32]User)
-	mutexUser = &sync.RWMutex{}
+	mutexUser = &sync.Mutex{}
 }
 
 func SetUser(user User) {
@@ -36,8 +36,8 @@ func SetUser(user User) {
 }
 
 func GetUser(id int32) (User, error) {
-	//mutexUser.RLock()
-	//defer mutexUser.RUnlock()
+	mutexUser.Lock()
+	defer mutexUser.Unlock()
 
 	user, ok := userMap[id]
 
@@ -84,7 +84,7 @@ func ValidateUserParams(params map[string]interface{}, scenario string) (result 
 	return true
 }
 
-func UpdateUser(user User, params map[string]interface{}, conditions []Condition) (int64, error) {
+func UpdateUser(user *User, params map[string]interface{}, conditions []Condition) (int64, error) {
 	if len(params) < 1 {
 		return 0, errors.New("error")
 	}

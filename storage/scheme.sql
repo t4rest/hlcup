@@ -22,27 +22,21 @@ USE `t4rest`;
 
 -- Экспортируемые данные не выделены.
 -- Дамп структуры для таблица t4rest.visits
-create table t4rest.visits
-(
-    id int(10) unsigned not null primary key,
-    location int(10) unsigned default 'NULL' null,
-    user int(10) unsigned default 'NULL' null,
-    visited_at int default 'NULL' null,
-    mark tinyint(2) unsigned default 'NULL' null,
-    gender varchar(10) default 'NULL' null,
-    birth_date int default 'NULL' null,
-    country varchar(255) default 'NULL' null,
-    distance int default 'NULL' null
-)
-;
+CREATE TABLE `visits` (
+  `id` INT(10) UNSIGNED NOT NULL,
+  `location` INT(10) UNSIGNED NOT NULL,
+  `user` INT(10) UNSIGNED NOT NULL,
+  `visited_at` INT(11) NOT NULL,
+  `mark` TINYINT(2) UNSIGNED NOT NULL,
+  `gender` VARCHAR(10) NOT NULL,
+  `birth_date` INT(11) NOT NULL,
+  `country` VARCHAR(255) NOT NULL,
+  `distance` INT(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `user` (`user`),
+  INDEX `location` (`location`)
+);
 
-create index visits_user_index
-    on visits (user)
-;
-
-create index visits_location_index
-    on visits (location)
-;
 -- Экспортируемые данные не выделены.
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;

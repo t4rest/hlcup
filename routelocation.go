@@ -156,7 +156,7 @@ func UpdateLocation(ctx *fasthttp.RequestCtx) {
 	}
 	conditions = append(conditions, userIdCondition)
 
-	models.UpdateLocation(location, params, conditions)
+	models.UpdateLocation(&location, params, conditions)
 
 	ctx.SetBody([]byte("{}"))
 }

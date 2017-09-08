@@ -159,7 +159,7 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 	}
 	conditions = append(conditions, userIdCondition)
 
-	models.UpdateUser(user, params, conditions)
+	models.UpdateUser(&user, params, conditions)
 
 	ctx.SetContentType("application/json;charset=utf-8")
 	ctx.SetBody([]byte("{}"))

@@ -2,10 +2,10 @@ package main
 
 import (
 	"archive/zip"
+	"github.com/mailru/easyjson"
 	"highload/models"
 	"io/ioutil"
 	"strings"
-	"github.com/mailru/easyjson"
 )
 
 func ImportDataFromZip() error {
@@ -13,7 +13,7 @@ func ImportDataFromZip() error {
 	var err error
 	r, err = zip.OpenReader("/tmp/data/data.zip")
 	if err != nil {
-		r, err = zip.OpenReader("/home/andrey/go/src/hlcupdoc/data/TRAIN/data/data.zip")
+		r, err = zip.OpenReader("/home/andrey/go/src/hlcupdoc/data/FULL/data/data.zip")
 
 		if err != nil {
 			return err

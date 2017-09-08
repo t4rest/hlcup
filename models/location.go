@@ -19,11 +19,11 @@ type Locations struct {
 }
 
 var locationMap map[int32]Location
-var mutexLocation *sync.RWMutex
+var mutexLocation *sync.Mutex
 
 func init() {
 	locationMap = make(map[int32]Location)
-	mutexLocation = &sync.RWMutex{}
+	mutexLocation = &sync.Mutex{}
 }
 
 func SetLocation(location Location) {
@@ -34,8 +34,8 @@ func SetLocation(location Location) {
 }
 
 func GetLocation(id int32) (Location, error) {
-	mutexLocation.RLock()
-	defer mutexLocation.RUnlock()
+	mutexLocation.Lock()
+	defer mutexLocation.Unlock()
 
 	location, ok := locationMap[id]
 
@@ -82,7 +82,7 @@ func ValidateLocationParams(params map[string]interface{}, scenario string) (res
 	return true
 }
 
-func UpdateLocation(visit Location, params map[string]interface{}, conditions []Condition) (int64, error) {
+func UpdateLocation(visit *Location, params map[string]interface{}, conditions []Condition) (int64, error) {
 	if len(params) < 1 {
 		return 0, errors.New("error")
 	}
