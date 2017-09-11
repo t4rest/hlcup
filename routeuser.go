@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
 	"highload/models"
@@ -54,13 +53,12 @@ func GetUser(ctx *fasthttp.RequestCtx) {
 func CreateUser(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	user := models.User{}
+	user := &models.User{}
 	var err error
 	// check params
-	err = easyjson.Unmarshal(ctx.PostBody(), &user)
+	err = easyjson.Unmarshal(ctx.PostBody(), user)
 
 	if err != nil {
-		fmt.Println(err.Error())
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
@@ -68,14 +66,11 @@ func CreateUser(ctx *fasthttp.RequestCtx) {
 
 	err = json.Unmarshal(ctx.PostBody(), &params)
 	if err != nil {
-		fmt.Println(err.Error())
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
 	if !models.ValidateUserParams(params, "insert") {
-		fmt.Println("ValidateUserParams - insert")
-		fmt.Println(params)
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
@@ -88,12 +83,9 @@ func CreateUser(ctx *fasthttp.RequestCtx) {
 //update user
 func UpdateUser(ctx *fasthttp.RequestCtx) {
 	param := ctx.UserValue("id")
-	var conditions []models.Condition
-	var user models.User
+	var user *models.User
 
 	if param == nil {
-		fmt.Println("user update param nil")
-
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
@@ -105,15 +97,12 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 
 	strId, ok := param.(string)
 	if !ok {
-
-		fmt.Println("user update strId != ok")
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
 	id64, err := strconv.ParseInt(strId, 10, 32)
 	if err != nil {
-		fmt.Println(err.Error())
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
@@ -123,7 +112,6 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 	user, err = models.GetUser(id)
 	if err != nil {
 
-		fmt.Println(err.Error())
 		if err == models.NotFound {
 			ctx.Error("", fasthttp.StatusNotFound)
 			return
@@ -137,29 +125,16 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 
 	err = json.Unmarshal(ctx.PostBody(), &params)
 	if err != nil {
-		fmt.Println(err.Error())
-
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
 	if !models.ValidateUserParams(params, "update") {
-		fmt.Println("user update validation failed")
-		fmt.Println(params)
-
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
-	userIdCondition := models.Condition{
-		Param:         "id",
-		Value:         strId,
-		Operator:      "=",
-		JoinCondition: "and",
-	}
-	conditions = append(conditions, userIdCondition)
-
-	models.UpdateUser(&user, params, conditions)
+	models.UpdateUser(user, params)
 
 	ctx.SetContentType("application/json;charset=utf-8")
 	ctx.SetBody([]byte("{}"))

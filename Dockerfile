@@ -20,17 +20,6 @@ RUN mkdir data
 
 RUN yum install zip & yum install unzip -y
 
-RUN wget http://dev.mysql.com/get/mysql57-community-release-el7-7.noarch.rpm
-RUN yum localinstall mysql57-community-release-el7-7.noarch.rpm -y
-RUN yum install mysql-community-server -y
-#
-#RUN mysql_install_db
-
-RUN chown -R mysql /var/lib/mysql
-RUN chgrp -R mysql /var/lib/mysql
-
-#COPY storage/my.cnf /etc/
-
 # Задаем переменные окружения для работы Go
 ENV PATH=${PATH}:/usr/local/go/bin GOROOT=/usr/local/go GOPATH=/root/go
 
@@ -39,7 +28,7 @@ ADD . go/src/highload
 
 # Компилируем и устанавливаем наш сервер
 
-RUN go get highload && go build highload && go install highload
+RUN go get highload && go build -gcflags '-N -l' highload && go install highload
 
 # Открываем 80-й порт наружу
 EXPOSE 80

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"sync"
 	"github.com/pkg/errors"
 )
@@ -17,25 +16,25 @@ type User struct {
 }
 
 type Users struct {
-	Users []User `json:"users"`
+	Users []*User `json:"users"`
 }
 
-var userMap map[int32]User
+var userMap map[int32]*User
 var mutexUser *sync.Mutex
 
 func init() {
-	userMap = make(map[int32]User)
+	userMap = make(map[int32]*User)
 	mutexUser = &sync.Mutex{}
 }
 
-func SetUser(user User) {
+func SetUser(user *User) {
 	mutexUser.Lock()
 	defer mutexUser.Unlock()
 
 	userMap[user.ID] = user
 }
 
-func GetUser(id int32) (User, error) {
+func GetUser(id int32) (*User, error) {
 	mutexUser.Lock()
 	defer mutexUser.Unlock()
 
@@ -54,7 +53,7 @@ func InsertUsers(users Users) {
 	}
 }
 
-func InsertUser(user User) {
+func InsertUser(user *User) {
 	SetUser(user)
 }
 
@@ -75,37 +74,16 @@ func ValidateUserParams(params map[string]interface{}, scenario string) (result 
 		if scenario == "update" && param == "id" {
 			return false
 		}
-
-		//if !StringInSlice(param, GetUserFields()) {
-		//	return false
-		//}
 	}
 
 	return true
 }
 
-func UpdateUser(user *User, params map[string]interface{}, conditions []Condition) (int64, error) {
+func UpdateUser(user *User, params map[string]interface{}) (int64, error) {
 	if len(params) < 1 {
 		return 0, errors.New("error")
 	}
 
-	var query string
-	var conditionString string
-	var setString string
-	var values []interface{}
-
-	if len(conditions) > 0 {
-		conditionString += "where "
-	}
-	for i := 0; i < len(conditions); i++ {
-		condition := conditions[i]
-
-		if i > 0 {
-			conditionString += condition.JoinCondition + " "
-		}
-
-		conditionString += fmt.Sprintf("%s %s %s", condition.Param, condition.Operator, condition.Value)
-	}
 
 	email, ok := params["email"].(string)
 	if ok {
@@ -125,40 +103,14 @@ func UpdateUser(user *User, params map[string]interface{}, conditions []Conditio
 	gender, ok := params["gender"].(string)
 	if ok {
 		user.Gender = gender
-
-		setString += fmt.Sprintf("%s = ?", "gender")
-		values = append(values, gender)
 	}
 
 	birthDate, ok := params["birth_date"].(int)
 	if ok {
 		user.BirthDate = birthDate
-
-		if len(setString) != 0 {
-			setString += ","
-		}
-
-		setString += fmt.Sprintf("%s = ?", "birth_date")
-		values = append(values, birthDate)
 	}
 
-	if len(setString) != 0 {
+	SetUser(user)
 
-		query = fmt.Sprintf("update visits set %s %s", setString, conditionString)
-
-		fmt.Println(query)
-
-		stmtIns, err := db.Prepare(query)
-
-		if err != nil {
-			return 0, err
-		}
-		defer stmtIns.Close()
-
-		result, err := stmtIns.Exec(values...)
-
-		return result.RowsAffected()
-	}
-
-	return 0, nil
+	return 1, nil
 }

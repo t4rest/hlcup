@@ -1,10 +1,9 @@
 package models
 
 import (
-	"fmt"
-	"strings"
-	"sync"
 	"github.com/pkg/errors"
+	"sort"
+	"sync"
 )
 
 type Visit struct {
@@ -16,7 +15,7 @@ type Visit struct {
 }
 
 type UserVisit struct {
-	Mark      int    `json:"mark"`
+	Mark      uint8  `json:"mark"`
 	VisitedAt int    `json:"visited_at"`
 	Place     string `json:"place"`
 }
@@ -26,29 +25,66 @@ type VisitAvg struct {
 }
 
 type Visits struct {
-	Visits []Visit `json:"visits"`
+	Visits []*Visit `json:"visits"`
 }
 
 type UserVisitsSl struct {
 	Visits []UserVisit `json:"visits"`
 }
 
-var visitMap map[int32]Visit
-var mutexVisit *sync.Mutex
-
-func init() {
-	visitMap = make(map[int32]Visit)
-	mutexVisit = &sync.Mutex{}
+type UserVisits struct {
+	Visit    *Visit
+	Location *Location
+	User     *User
 }
 
-func SetVisit(visit Visit) {
+type LocationVisits struct {
+	Visit    *Visit
+	Location *Location
+	User     *User
+}
+
+var visitMap map[int32]*Visit
+var userVisitMap map[int32][]UserVisits
+var locationVisitMap map[int32][]LocationVisits
+var mutexVisit *sync.Mutex
+var mutexUserVisit *sync.Mutex
+var mutexAvg *sync.Mutex
+var mutexV *sync.Mutex
+const oneYear = 31557600
+
+func init() {
+	visitMap = make(map[int32]*Visit)
+	userVisitMap = make(map[int32][]UserVisits)
+	locationVisitMap = make(map[int32][]LocationVisits)
+	mutexVisit = &sync.Mutex{}
+	mutexUserVisit = &sync.Mutex{}
+	mutexAvg = &sync.Mutex{}
+	mutexV = &sync.Mutex{}
+}
+
+type UserVisitSt []UserVisit
+
+func (slice UserVisitSt) Len() int {
+	return len(slice)
+}
+
+func (slice UserVisitSt) Less(i, j int) bool {
+	return slice[i].VisitedAt < slice[j].VisitedAt
+}
+
+func (slice UserVisitSt) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
+func SetVisit(visit *Visit) {
 	mutexVisit.Lock()
 	defer mutexVisit.Unlock()
 
 	visitMap[visit.ID] = visit
 }
 
-func GetVisit(id int32) (Visit, error) {
+func GetVisit(id int32) (*Visit, error) {
 	mutexVisit.Lock()
 	defer mutexVisit.Unlock()
 
@@ -62,77 +98,23 @@ func GetVisit(id int32) (Visit, error) {
 }
 
 func InsertVisits(visits Visits) {
-
-	var user User
-	var location Location
-	valueStrings := make([]string, 0, len(visits.Visits)+6)
-	valueArgs := make([]interface{}, 0, (len(visits.Visits)+6)*5)
 	for _, visit := range visits.Visits {
-		SetVisit(visit)
-
-		user, _ = GetUser(visit.UserID)
-		location, _ = GetLocation(visit.LocationID)
-
-		valueStrings = append(valueStrings, "(?, ?, ?, ?, ?, ?, ?, ?, ?)")
-		valueArgs = append(valueArgs, visit.ID)
-		valueArgs = append(valueArgs, visit.LocationID)
-		valueArgs = append(valueArgs, visit.UserID)
-		valueArgs = append(valueArgs, visit.VisitedAt)
-		valueArgs = append(valueArgs, visit.Mark)
-
-		valueArgs = append(valueArgs, user.Gender)
-		valueArgs = append(valueArgs, user.BirthDate)
-
-		valueArgs = append(valueArgs, location.Country)
-		valueArgs = append(valueArgs, location.Distance)
-	}
-	stmt := fmt.Sprintf(
-		"INSERT IGNORE INTO visits (id, location, user, visited_at, mark, gender, birth_date, country, distance) "+
-			"VALUES %s",
-		strings.Join(valueStrings, ","),
-	)
-
-	_, err := db.Exec(stmt, valueArgs...)
-
-	if err != nil {
-		fmt.Println(err.Error())
+		InsertVisit(visit)
 	}
 }
 
-func InsertVisit(visit Visit) {
+func InsertVisit(visit *Visit) {
 	SetVisit(visit)
 
-	var user User
-	var location Location
-	valueStrings := make([]string, 0, 5+6)
-	valueArgs := make([]interface{}, 0, (5+6)*5)
+	mutexUserVisit.Lock()
+	defer mutexUserVisit.Unlock()
 
-	user, _ = GetUser(visit.UserID)
-	location, _ = GetLocation(visit.LocationID)
+	user, err1 := GetUser(visit.UserID)
+	location, err2 := GetLocation(visit.LocationID)
 
-	valueStrings = append(valueStrings, "(?, ?, ?, ?, ?, ?, ?, ?, ?)")
-
-	valueArgs = append(valueArgs, visit.ID)
-	valueArgs = append(valueArgs, visit.LocationID)
-	valueArgs = append(valueArgs, visit.UserID)
-	valueArgs = append(valueArgs, visit.VisitedAt)
-	valueArgs = append(valueArgs, visit.Mark)
-
-	valueArgs = append(valueArgs, user.Gender)
-	valueArgs = append(valueArgs, user.BirthDate)
-
-	valueArgs = append(valueArgs, location.Country)
-	valueArgs = append(valueArgs, location.Distance)
-
-	stmt := fmt.Sprintf(
-		"INSERT IGNORE INTO visits (id, location, user, visited_at, mark, gender, birth_date, country, distance) "+
-			"VALUES %s",
-		strings.Join(valueStrings, ","),
-	)
-	_, err := db.Exec(stmt, valueArgs...)
-
-	if err != nil {
-		fmt.Println(err.Error())
+	if err1 == nil && err2 == nil {
+		userVisitMap[visit.UserID] = append(userVisitMap[visit.UserID], UserVisits{visit, location, user})
+		locationVisitMap[visit.LocationID] = append(locationVisitMap[visit.LocationID], LocationVisits{visit, location, user})
 	}
 }
 
@@ -140,7 +122,7 @@ func GetVisitFields() []string {
 	return []string{"id", "location", "user", "visited_at", "mark"}
 }
 
-func ValidatVsitParams(params map[string]interface{}, scenario string) (result bool) {
+func ValidateVsitParams(params map[string]interface{}, scenario string) (result bool) {
 	if scenario == "insert" && len(params) != len(GetVisitFields()) {
 		return false
 	}
@@ -153,193 +135,114 @@ func ValidatVsitParams(params map[string]interface{}, scenario string) (result b
 		if scenario == "update" && param == "id" {
 			return false
 		}
-
-		//if !StringInSlice(param, GetUserFields()) {
-		//	return false
-		//}
 	}
 
 	return true
 }
 
-func GetAverage(conditions []Condition) (VisitAvg, error) {
-	var query string
-	var conditionString string
-	var visitAvg VisitAvg
-	var average float32
+func GetAverage(id, fromDate, toDate, fromAge, toAge int, gender string) (float64, error) {
+	mutexAvg.Lock()
+	defer mutexAvg.Unlock()
 
-	// where
-	if len(conditions) > 0 {
-		conditionString += "where "
-	}
-	for i := 0; i < len(conditions); i++ {
-		condition := conditions[i]
+	var avg float64 = 0
 
-		if i > 0 {
-			conditionString += condition.JoinCondition + " "
+	var marksSum uint8 = 0
+	var markCount int64 = 0
+
+	for _, sl := range locationVisitMap[int32(id)] {
+
+		if fromDate > 0 && fromDate > sl.Visit.VisitedAt {
+			continue
 		}
 
-		conditionString += fmt.Sprintf("%s %s %s ", condition.Param, condition.Operator, condition.Value)
+		if toDate > 0 && toDate < sl.Visit.VisitedAt {
+			continue
+		}
+
+		if fromAge > 0 && fromAge*oneYear > sl.User.BirthDate {
+			continue
+		}
+
+		if toAge > 0 && toAge*oneYear < sl.User.BirthDate {
+			continue
+		}
+
+		if len(gender) > 0 && gender != sl.User.Gender {
+			continue
+		}
+
+		marksSum += sl.Visit.Mark
+		markCount++
 	}
 
-	query = fmt.Sprintf("select round(avg(mark), 5) as average from visits %s", conditionString)
-
-	err = db.QueryRow(query).Scan(&average)
-
-	if err != nil {
-		return visitAvg, err
+	if markCount > 0 {
+		avg = float64(marksSum)/float64(markCount) + 0.00000001
 	}
 
-	visitAvg = VisitAvg{Avg: average}
-
-	return visitAvg, nil
+	return avg, nil
 }
 
-func SelectVisits(conditions []Condition, sort Sort) (UserVisitsSl, error) {
-	var query string
-	var conditionString string
-	var sortString string
+func SelectVisits(id, fromDate, toDate, toDistance int, country string) (UserVisitsSl, error) {
+	mutexV.Lock()
+	defer mutexV.Unlock()
+
 	var userVisitsSl UserVisitsSl
-	var userVisits []UserVisit = []UserVisit{}
+	var userVisits = UserVisitSt{}
 
-	// where
-	if len(conditions) > 0 {
-		conditionString += "where "
-	}
-	for i := 0; i < len(conditions); i++ {
-		condition := conditions[i]
+	for _, sl := range userVisitMap[int32(id)] {
 
-		if i > 0 {
-			conditionString += condition.JoinCondition + " "
+		if fromDate > 0 && fromDate > sl.Visit.VisitedAt {
+			continue
 		}
 
-		conditionString += fmt.Sprintf("%s %s %s ", condition.Param, condition.Operator, condition.Value)
-	}
-
-	// sort
-	if len(sort.Fields) > 0 {
-		sortString += " order by "
-
-		for _, sortField := range sort.Fields {
-			sortString += " " + sortField
+		if toDate > 0 && toDate < sl.Visit.VisitedAt {
+			continue
 		}
 
-		sortString += " " + sort.Direction + " "
-	}
-
-	query = fmt.Sprintf("select mark, visited_at, location from visits %s %s", conditionString, sortString)
-
-	rows, err := db.Query(query)
-
-	if err != nil {
-		return userVisitsSl, err
-	}
-
-	for rows.Next() {
-
-		var mark int
-		var visitedAt int
-		var location int
-
-		err = rows.Scan(&mark, &visitedAt, &location)
-		if err != nil {
-			return userVisitsSl, err
+		if len(country) > 0 && country != sl.Location.Country {
+			continue
 		}
 
-		locationSt, _ := GetLocation(int32(location))
+		if toDistance > 0 && int32(toDistance) < sl.Location.Distance {
+			continue
+		}
 
-		r := UserVisit{mark, visitedAt, locationSt.Place}
-		userVisits = append(userVisits, r)
+		userVisits = append(userVisits, UserVisit{sl.Visit.Mark, sl.Visit.VisitedAt, sl.Location.Place})
 	}
+
+	sort.Sort(userVisits)
 
 	userVisitsSl = UserVisitsSl{Visits: userVisits}
 
 	return userVisitsSl, nil
 }
 
-func UpdateVisit(visit *Visit, params map[string]interface{}, conditions []Condition) (int64, error) {
+func UpdateVisit(visit *Visit, params map[string]interface{}) (int64, error) {
 	if len(params) < 1 {
 		return 0, errors.New("error")
-	}
-
-	var query string
-	var conditionString string
-	var setString string
-	var values []interface{}
-
-	if len(conditions) > 0 {
-		conditionString += "where "
-	}
-	for i := 0; i < len(conditions); i++ {
-		condition := conditions[i]
-
-		if i > 0 {
-			conditionString += condition.JoinCondition + " "
-		}
-
-		conditionString += fmt.Sprintf("%s %s %s", condition.Param, condition.Operator, condition.Value)
 	}
 
 	location, ok := params["location"].(int32)
 	if ok {
 		visit.LocationID = location
-
-		setString += fmt.Sprintf("%s = ?", "location")
-		values = append(values, location)
 	}
 
 	user, ok := params["user"].(int32)
 	if ok {
 		visit.UserID = user
-
-		if len(setString) != 0 {
-			setString += ","
-		}
-
-		setString += fmt.Sprintf("%s = ?", "user")
-		values = append(values, user)
-
 	}
 
 	visitedAt, ok := params["visited_at"].(int)
 	if ok {
 		visit.VisitedAt = visitedAt
-
-		if len(setString) != 0 {
-			setString += ","
-		}
-
-		setString += fmt.Sprintf("%s = ?", "visited_at")
-		values = append(values, visitedAt)
 	}
 
 	mark, ok := params["mark"].(uint8)
 	if ok {
-
-		if len(setString) != 0 {
-			setString += ","
-		}
-
 		visit.Mark = mark
-
-		setString += fmt.Sprintf("%s = ?", "mark")
-		values = append(values, params["mark"])
 	}
 
-	if len(setString) != 0 {
-		query = fmt.Sprintf("update visits set %s %s", setString, conditionString)
+	SetVisit(visit)
 
-		stmtIns, err := db.Prepare(query)
-
-		if err != nil {
-			return 0, err
-		}
-		defer stmtIns.Close()
-
-		result, err := stmtIns.Exec(values...)
-
-		return result.RowsAffected()
-	}
-
-	return 0, nil
+	return 1, nil
 }

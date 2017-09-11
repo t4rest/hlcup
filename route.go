@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
+	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
 	"highload/models"
 	"strconv"
-	"time"
-	"github.com/mailru/easyjson"
 )
 
 func AvgVisits(ctx *fasthttp.RequestCtx) {
@@ -23,6 +23,7 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 			return
 		}
 	}
+
 	if ctx.QueryArgs().Has("toDate") {
 		toDate, err = ctx.QueryArgs().GetUint("toDate")
 
@@ -50,9 +51,7 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 
 	var gender = (string)(ctx.QueryArgs().Peek("gender"))
 
-	var avg models.VisitAvg
-	var conditions []models.Condition
-
+	var avg float64
 	id, err = strconv.Atoi(ctx.UserValue("id").(string))
 
 	if err != nil {
@@ -65,14 +64,6 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	idCondition := models.Condition{
-		Param:         "location",
-		Value:         strconv.Itoa(id),
-		Operator:      "=",
-		JoinCondition: "and",
-	}
-	conditions = append(conditions, idCondition)
-
 	_, err = models.GetLocation(int32(id))
 
 	if err == models.NotFound {
@@ -80,72 +71,20 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	if fromDate > 0 {
-		conditions = append(conditions, models.Condition{
-			Param:         "visited_at ",
-			Value:         strconv.Itoa(fromDate),
-			Operator:      ">",
-			JoinCondition: "and",
-		})
-	}
-
-	if toDate > 0 {
-		conditions = append(conditions, models.Condition{
-			Param:         "visited_at ",
-			Value:         strconv.Itoa(toDate),
-			Operator:      "<",
-			JoinCondition: "and",
-		})
-	}
-
-	if fromAge > 0 {
-		conditions = append(conditions, models.Condition{
-			Param:         "birth_date ",
-			Value:         strconv.Itoa(int(time.Now().AddDate(-fromAge, 0, 0).Unix())),
-			Operator:      "<",
-			JoinCondition: "and",
-		})
-	}
-
-	if toAge > 0 {
-		conditions = append(conditions, models.Condition{
-			Param:         "birth_date ",
-			Value:         strconv.Itoa(int(time.Now().AddDate(-toAge, 0, 0).Unix())),
-			Operator:      ">",
-			JoinCondition: "and",
-		})
-	}
-
-	if len(gender) > 0 {
-		conditions = append(conditions, models.Condition{
-			Param:         "gender ",
-			Value:         "'" + gender + "'",
-			Operator:      "=",
-			JoinCondition: "and",
-		})
-	}
-
-	avg, err = models.GetAverage(conditions)
+	avg, err = models.GetAverage(id, fromDate, toDate, fromAge, toAge, gender)
 
 	if err == sql.ErrNoRows {
 		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
 		return
 	}
 
-	response, err := easyjson.Marshal(avg)
-	if err != nil {
-		ctx.Error("", fasthttp.StatusNotFound)
-		return
-	}
-
-	ctx.SetBody(response)
+	ctx.WriteString(fmt.Sprintf("{\"avg\" : %.5f}", avg))
 }
 
 func Visits(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	var id int
-	var fromDate, toDate, toDistance int
+	var id, fromDate, toDate, toDistance int
 	var err error
 	var visits models.UserVisitsSl
 
@@ -178,22 +117,12 @@ func Visits(ctx *fasthttp.RequestCtx) {
 
 	var country = (string)(ctx.QueryArgs().Peek("country"))
 
- 	var conditions []models.Condition
-
 	id, err = strconv.Atoi(ctx.UserValue("id").(string))
 
 	if err != nil {
 		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
-
-	idCondition := models.Condition{
-		Param:         "user",
-		Value:         strconv.Itoa(id),
-		Operator:      "=",
-		JoinCondition: "and",
-	}
-	conditions = append(conditions, idCondition)
 
 	_, err = models.GetUser(int32(id))
 
@@ -202,43 +131,7 @@ func Visits(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	if fromDate > 0 {
-		conditions = append(conditions, models.Condition{
-			Param:         "visited_at ",
-			Value:         strconv.Itoa(fromDate),
-			Operator:      ">",
-			JoinCondition: "and",
-		})
-	}
-
-	if toDate > 0 {
-		conditions = append(conditions, models.Condition{
-			Param:         "visited_at ",
-			Value:         strconv.Itoa(toDate),
-			Operator:      "<",
-			JoinCondition: "and",
-		})
-	}
-
-	if len(country) > 0 {
-		conditions = append(conditions, models.Condition{
-			Param:         "country",
-			Value:         "'" + country + "'",
-			Operator:      "=",
-			JoinCondition: "and",
-		})
-	}
-
-	if toDistance > 0 {
-		conditions = append(conditions, models.Condition{
-			Param:         "distance",
-			Value:         strconv.Itoa(toDistance),
-			Operator:      "<",
-			JoinCondition: "and",
-		})
-	}
-
-	visits, err = models.SelectVisits(conditions, models.Sort{Fields: []string{"visited_at"}, Direction: "asc"})
+	visits, err = models.SelectVisits(id, fromDate, toDate, toDistance, country)
 
 	if err == sql.ErrNoRows {
 		ctx.Error("", fasthttp.StatusNotFound)

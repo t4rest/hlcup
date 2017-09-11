@@ -1,10 +1,9 @@
 package models
 
 import (
-	"database/sql"
 	"errors"
-	_ "github.com/go-sql-driver/mysql"
 	"fmt"
+	"database/sql"
 )
 
 var (
@@ -40,15 +39,6 @@ func (f FloatPrecision5) MarshalJSON() ([]byte, error) {
 
 func init() {
 	println("on start")
-
-	db, err = sql.Open("mysql", "root:123@tcp(localhost:3306)/t4rest?charset=utf8&interpolateParams=true")
-	PanicOnErr(err)
-
-	db.SetMaxOpenConns(10)
-
-	// проверяем что подключение реально произошло ( делаем запрос )
-	err = db.Ping()
-	PanicOnErr(err)
 }
 
 //PanicOnErr panics on error

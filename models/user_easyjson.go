@@ -44,16 +44,24 @@ func easyjson9e1087fdDecodeHighloadModels(in *jlexer.Lexer, out *Users) {
 				in.Delim('[')
 				if out.Users == nil {
 					if !in.IsDelim(']') {
-						out.Users = make([]User, 0, 1)
+						out.Users = make([]*User, 0, 8)
 					} else {
-						out.Users = []User{}
+						out.Users = []*User{}
 					}
 				} else {
 					out.Users = (out.Users)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v1 User
-					(v1).UnmarshalEasyJSON(in)
+					var v1 *User
+					if in.IsNull() {
+						in.Skip()
+						v1 = nil
+					} else {
+						if v1 == nil {
+							v1 = new(User)
+						}
+						(*v1).UnmarshalEasyJSON(in)
+					}
 					out.Users = append(out.Users, v1)
 					in.WantComma()
 				}
@@ -86,7 +94,11 @@ func easyjson9e1087fdEncodeHighloadModels(out *jwriter.Writer, in Users) {
 			if v2 > 0 {
 				out.RawByte(',')
 			}
-			(v3).MarshalEasyJSON(out)
+			if v3 == nil {
+				out.RawString("null")
+			} else {
+				(*v3).MarshalEasyJSON(out)
+			}
 		}
 		out.RawByte(']')
 	}

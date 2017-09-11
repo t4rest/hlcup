@@ -55,11 +55,11 @@ func ImportDataFromZip() error {
 
 		switch parts[0] {
 		case "users":
-			go importUsers(bytes)
+			importUsers(bytes)
 		case "locations":
-			go importLocations(bytes)
+			importLocations(bytes)
 		case "visits":
-			go importVisits(bytes)
+			importVisits(bytes)
 		}
 		if err != nil {
 			return err
