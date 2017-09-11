@@ -83,6 +83,7 @@ func CreateUser(ctx *fasthttp.RequestCtx) {
 //update user
 func UpdateUser(ctx *fasthttp.RequestCtx) {
 	param := ctx.UserValue("id")
+	var userNew *models.User
 	var user *models.User
 
 	if param == nil {
@@ -121,6 +122,14 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
+	body := ctx.PostBody()
+
+	err = json.Unmarshal(body, &userNew)
+	if err != nil {
+		ctx.Error("", fasthttp.StatusBadRequest)
+		return
+	}
+
 	var params map[string]interface{}
 
 	err = json.Unmarshal(ctx.PostBody(), &params)
@@ -134,7 +143,7 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	models.UpdateUser(user, params)
+	models.UpdateUser(user, params, userNew)
 
 	ctx.SetContentType("application/json;charset=utf-8")
 	ctx.SetBody([]byte("{}"))

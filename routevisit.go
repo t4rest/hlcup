@@ -83,6 +83,7 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
 	param := ctx.UserValue("id")
+	var visitNew *models.Visit
 	var visit *models.Visit
 
 	if param == nil {
@@ -119,6 +120,14 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
+	body := ctx.PostBody()
+
+	err = json.Unmarshal(body, &visitNew)
+	if err != nil {
+		ctx.Error("", fasthttp.StatusBadRequest)
+		return
+	}
+
 	var params map[string]interface{}
 
 	err = json.Unmarshal(ctx.PostBody(), &params)
@@ -132,7 +141,7 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	models.UpdateVisit(visit, params)
+	models.UpdateVisit(visit, params, visitNew)
 
 	ctx.SetBody([]byte("{}"))
 }

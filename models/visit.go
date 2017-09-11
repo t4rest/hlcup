@@ -217,32 +217,18 @@ func SelectVisits(id, fromDate, toDate, toDistance int, country string) (UserVis
 	return userVisitsSl, nil
 }
 
-func UpdateVisit(visit *Visit, params map[string]interface{}) (int64, error) {
+func UpdateVisit(visit *Visit, params map[string]interface{}, visitNew *Visit) (int64, error) {
 	if len(params) < 1 {
 		return 0, errors.New("error")
 	}
 
-	location, ok := params["location"].(int32)
-	if ok {
-		visit.LocationID = location
-	}
+	visitNew.ID = visit.ID
+	if visitNew.LocationID == 0 { visitNew.LocationID = visit.LocationID }
+	if visitNew.UserID == 0 { visitNew.UserID = visit.UserID }
+	if visitNew.VisitedAt == 0 { visitNew.VisitedAt = visit.VisitedAt }
+	if visitNew.Mark == 0 { visitNew.Mark = visit.Mark }
 
-	user, ok := params["user"].(int32)
-	if ok {
-		visit.UserID = user
-	}
-
-	visitedAt, ok := params["visited_at"].(int)
-	if ok {
-		visit.VisitedAt = visitedAt
-	}
-
-	mark, ok := params["mark"].(uint8)
-	if ok {
-		visit.Mark = mark
-	}
-
-	SetVisit(visit)
+	SetVisit(visitNew)
 
 	return 1, nil
 }

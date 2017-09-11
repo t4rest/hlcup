@@ -82,6 +82,7 @@ func UpdateLocation(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
 	param := ctx.UserValue("id")
+	var locationNew *models.Location
 	var location *models.Location
 
 	if param == nil {
@@ -119,6 +120,14 @@ func UpdateLocation(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
+	body := ctx.PostBody()
+
+	err = json.Unmarshal(body, &locationNew)
+	if err != nil {
+		ctx.Error("", fasthttp.StatusBadRequest)
+		return
+	}
+
 	var params map[string]interface{}
 
 	err = json.Unmarshal(ctx.PostBody(), &params)
@@ -132,7 +141,7 @@ func UpdateLocation(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	models.UpdateLocation(location, params)
+	models.UpdateLocation(location, params, locationNew)
 
 	ctx.SetBody([]byte("{}"))
 }

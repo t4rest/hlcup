@@ -79,38 +79,19 @@ func ValidateUserParams(params map[string]interface{}, scenario string) (result 
 	return true
 }
 
-func UpdateUser(user *User, params map[string]interface{}) (int64, error) {
+func UpdateUser(user *User, params map[string]interface{}, userNew *User) (int64, error) {
 	if len(params) < 1 {
 		return 0, errors.New("error")
 	}
 
+	userNew.ID = user.ID
+	if userNew.BirthDate == 0 { userNew.BirthDate = user.BirthDate }
+	if userNew.Gender == "" { userNew.Gender = user.Gender }
+	if userNew.FirstName == "" { userNew.FirstName = user.FirstName }
+	if userNew.LastName == "" { userNew.LastName = user.LastName }
+	if userNew.Email == "" { userNew.Email = user.Email }
 
-	email, ok := params["email"].(string)
-	if ok {
-		user.Email = email
-	}
-
-	firstName, ok := params["first_name"].(string)
-	if ok {
-		user.FirstName = firstName
-	}
-
-	lastName, ok := params["last_name"].(string)
-	if ok {
-		user.LastName = lastName
-	}
-
-	gender, ok := params["gender"].(string)
-	if ok {
-		user.Gender = gender
-	}
-
-	birthDate, ok := params["birth_date"].(int)
-	if ok {
-		user.BirthDate = birthDate
-	}
-
-	SetUser(user)
+	SetUser(userNew)
 
 	return 1, nil
 }

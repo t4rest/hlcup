@@ -1,8 +1,8 @@
 package models
 
 import (
-	"sync"
 	"github.com/pkg/errors"
+	"sync"
 )
 
 type Location struct {
@@ -77,32 +77,26 @@ func ValidateLocationParams(params map[string]interface{}, scenario string) (res
 	return true
 }
 
-func UpdateLocation(location *Location, params map[string]interface{}) (int64, error) {
+func UpdateLocation(location *Location, params map[string]interface{}, locationNew *Location) (int64, error) {
 	if len(params) < 1 {
 		return 0, errors.New("error")
 	}
 
-	place, ok := params["place"].(string)
-	if ok {
-		location.Place = place
+	locationNew.ID = location.ID
+	if locationNew.Place == "" {
+		locationNew.Place = location.Place
+	}
+	if locationNew.Country == "" {
+		locationNew.Country = location.Country
+	}
+	if locationNew.City == "" {
+		locationNew.City = location.City
+	}
+	if locationNew.Distance == 0 {
+		locationNew.Distance = location.Distance
 	}
 
-	country, ok := params["country"].(string)
-	if ok {
-		location.Country = country
-	}
-
-	city, ok := params["city"].(string)
-	if ok {
-		location.City = city
-	}
-
-	distance, ok := params["distance"].(int32)
-	if ok {
-		location.Distance = distance
-	}
-
-	SetLocation(location)
+	SetLocation(locationNew)
 
 	return 1, nil
 }
