@@ -28,7 +28,7 @@ ADD . go/src/highload
 
 # Компилируем и устанавливаем наш сервер
 
-RUN go get highload && go build -gcflags '-N -l' highload && go install highload
+RUN go get highload && go build highload && go install highload
 
 # Открываем 80-й порт наружу
 EXPOSE 80

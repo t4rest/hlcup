@@ -28,7 +28,7 @@ func GetLocation(ctx *fasthttp.RequestCtx) {
 	location, err := models.GetLocation(id)
 	if err != nil {
 
- 		if err == models.NotFound {
+		if err == models.NotFound {
 			ctx.Error("", fasthttp.StatusNotFound)
 			return
 		}
@@ -68,22 +68,23 @@ func CreateLocation(ctx *fasthttp.RequestCtx) {
 	}
 
 	if !models.ValidateLocationParams(params, "insert") {
-
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
-	models.SetLocation(location)
+	//go func() {
+		models.SetLocation(location)
+	//}()
 
-	ctx.SetBody([]byte("{}"))
+	ctx.SetBody(resp)
 }
 
 func UpdateLocation(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	param := ctx.UserValue("id")
-	var locationNew *models.Location
 	var location *models.Location
+	param := ctx.UserValue("id")
+	locationNew := &models.Location{}
 
 	if param == nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
@@ -122,7 +123,7 @@ func UpdateLocation(ctx *fasthttp.RequestCtx) {
 
 	body := ctx.PostBody()
 
-	err = json.Unmarshal(body, &locationNew)
+	err = easyjson.Unmarshal(body, locationNew)
 	if err != nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
@@ -141,7 +142,9 @@ func UpdateLocation(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	models.UpdateLocation(location, params, locationNew)
+	//go func() {
+		models.UpdateLocation(location, locationNew)
+	//}()
 
-	ctx.SetBody([]byte("{}"))
+	ctx.SetBody(resp)
 }

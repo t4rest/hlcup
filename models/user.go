@@ -2,7 +2,6 @@ package models
 
 import (
 	"sync"
-	"github.com/pkg/errors"
 )
 
 type User struct {
@@ -20,25 +19,24 @@ type Users struct {
 }
 
 var userMap map[int32]*User
-var mutexUser *sync.Mutex
+var mutexUser *sync.RWMutex
 
 func init() {
 	userMap = make(map[int32]*User)
-	mutexUser = &sync.Mutex{}
+	mutexUser = &sync.RWMutex{}
 }
 
 func SetUser(user *User) {
 	mutexUser.Lock()
-	defer mutexUser.Unlock()
-
 	userMap[user.ID] = user
+	mutexUser.Unlock()
+
 }
 
 func GetUser(id int32) (*User, error) {
-	mutexUser.Lock()
-	defer mutexUser.Unlock()
-
+	mutexUser.RLock()
 	user, ok := userMap[id]
+	mutexUser.RUnlock()
 
 	if !ok {
 		return user, NotFound
@@ -79,10 +77,7 @@ func ValidateUserParams(params map[string]interface{}, scenario string) (result 
 	return true
 }
 
-func UpdateUser(user *User, params map[string]interface{}, userNew *User) (int64, error) {
-	if len(params) < 1 {
-		return 0, errors.New("error")
-	}
+func UpdateUser(user *User, userNew *User) (int64) {
 
 	userNew.ID = user.ID
 	if userNew.BirthDate == 0 { userNew.BirthDate = user.BirthDate }
@@ -93,5 +88,5 @@ func UpdateUser(user *User, params map[string]interface{}, userNew *User) (int64
 
 	SetUser(userNew)
 
-	return 1, nil
+	return 1
 }

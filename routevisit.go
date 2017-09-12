@@ -74,9 +74,11 @@ func CreateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	models.InsertVisit(visit)
+	//go func() {
+		models.SetVisit(visit)
+	//}()
 
-	ctx.SetBody([]byte("{}"))
+	ctx.SetBody(resp)
 }
 
 func UpdateVisit(ctx *fasthttp.RequestCtx) {
@@ -141,7 +143,9 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	models.UpdateVisit(visit, params, visitNew)
+	//go func() {
+		models.UpdateVisit(visit, visitNew)
+	//}()
 
-	ctx.SetBody([]byte("{}"))
+	ctx.SetBody(resp)
 }

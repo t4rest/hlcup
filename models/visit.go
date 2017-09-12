@@ -1,9 +1,9 @@
 package models
 
 import (
-	"github.com/pkg/errors"
 	"sort"
 	"sync"
+	"time"
 )
 
 type Visit struct {
@@ -47,20 +47,19 @@ type LocationVisits struct {
 var visitMap map[int32]*Visit
 var userVisitMap map[int32][]UserVisits
 var locationVisitMap map[int32][]LocationVisits
-var mutexVisit *sync.Mutex
-var mutexUserVisit *sync.Mutex
-var mutexAvg *sync.Mutex
-var mutexV *sync.Mutex
+var mutexVisit *sync.RWMutex
+var mutexUserVisit *sync.RWMutex
+
+var timeNow int64 = time.Now().UnixNano() / int64(time.Millisecond)
+
 const oneYear = 31557600
 
 func init() {
 	visitMap = make(map[int32]*Visit)
 	userVisitMap = make(map[int32][]UserVisits)
 	locationVisitMap = make(map[int32][]LocationVisits)
-	mutexVisit = &sync.Mutex{}
-	mutexUserVisit = &sync.Mutex{}
-	mutexAvg = &sync.Mutex{}
-	mutexV = &sync.Mutex{}
+	mutexVisit = &sync.RWMutex{}
+	mutexUserVisit = &sync.RWMutex{}
 }
 
 type UserVisitSt []UserVisit
@@ -79,16 +78,14 @@ func (slice UserVisitSt) Swap(i, j int) {
 
 func SetVisit(visit *Visit) {
 	mutexVisit.Lock()
-	defer mutexVisit.Unlock()
-
 	visitMap[visit.ID] = visit
+	mutexVisit.Unlock()
 }
 
 func GetVisit(id int32) (*Visit, error) {
-	mutexVisit.Lock()
-	defer mutexVisit.Unlock()
-
+	mutexVisit.RLock()
 	visit, ok := visitMap[id]
+	mutexVisit.RUnlock()
 
 	if !ok {
 		return visit, NotFound
@@ -107,7 +104,6 @@ func InsertVisit(visit *Visit) {
 	SetVisit(visit)
 
 	mutexUserVisit.Lock()
-	defer mutexUserVisit.Unlock()
 
 	user, err1 := GetUser(visit.UserID)
 	location, err2 := GetLocation(visit.LocationID)
@@ -116,6 +112,8 @@ func InsertVisit(visit *Visit) {
 		userVisitMap[visit.UserID] = append(userVisitMap[visit.UserID], UserVisits{visit, location, user})
 		locationVisitMap[visit.LocationID] = append(locationVisitMap[visit.LocationID], LocationVisits{visit, location, user})
 	}
+
+	mutexUserVisit.Unlock()
 }
 
 func GetVisitFields() []string {
@@ -141,9 +139,6 @@ func ValidateVsitParams(params map[string]interface{}, scenario string) (result 
 }
 
 func GetAverage(id, fromDate, toDate, fromAge, toAge int, gender string) (float64, error) {
-	mutexAvg.Lock()
-	defer mutexAvg.Unlock()
-
 	var avg float64 = 0
 
 	var marksSum uint8 = 0
@@ -159,12 +154,16 @@ func GetAverage(id, fromDate, toDate, fromAge, toAge int, gender string) (float6
 			continue
 		}
 
-		if fromAge > 0 && fromAge*oneYear > sl.User.BirthDate {
-			continue
+		if fromAge > 0 {
+			if !((float64(time.Now().Unix())-float64(sl.User.BirthDate))/31557600 > float64(fromAge)) {
+				continue
+			}
 		}
 
-		if toAge > 0 && toAge*oneYear < sl.User.BirthDate {
-			continue
+		if toAge > 0 {
+			if !((float64(time.Now().Unix())-float64(sl.User.BirthDate))/31557600 < float64(toAge)) {
+				continue
+			}
 		}
 
 		if len(gender) > 0 && gender != sl.User.Gender {
@@ -183,9 +182,6 @@ func GetAverage(id, fromDate, toDate, fromAge, toAge int, gender string) (float6
 }
 
 func SelectVisits(id, fromDate, toDate, toDistance int, country string) (UserVisitsSl, error) {
-	mutexV.Lock()
-	defer mutexV.Unlock()
-
 	var userVisitsSl UserVisitsSl
 	var userVisits = UserVisitSt{}
 
@@ -203,7 +199,7 @@ func SelectVisits(id, fromDate, toDate, toDistance int, country string) (UserVis
 			continue
 		}
 
-		if toDistance > 0 && int32(toDistance) < sl.Location.Distance {
+		if toDistance > 0 && int32(toDistance) <= sl.Location.Distance {
 			continue
 		}
 
@@ -217,18 +213,23 @@ func SelectVisits(id, fromDate, toDate, toDistance int, country string) (UserVis
 	return userVisitsSl, nil
 }
 
-func UpdateVisit(visit *Visit, params map[string]interface{}, visitNew *Visit) (int64, error) {
-	if len(params) < 1 {
-		return 0, errors.New("error")
-	}
+func UpdateVisit(visit *Visit, visitNew *Visit) int64 {
 
 	visitNew.ID = visit.ID
-	if visitNew.LocationID == 0 { visitNew.LocationID = visit.LocationID }
-	if visitNew.UserID == 0 { visitNew.UserID = visit.UserID }
-	if visitNew.VisitedAt == 0 { visitNew.VisitedAt = visit.VisitedAt }
-	if visitNew.Mark == 0 { visitNew.Mark = visit.Mark }
+	if visitNew.LocationID == 0 {
+		visitNew.LocationID = visit.LocationID
+	}
+	if visitNew.UserID == 0 {
+		visitNew.UserID = visit.UserID
+	}
+	if visitNew.VisitedAt == 0 {
+		visitNew.VisitedAt = visit.VisitedAt
+	}
+	if visitNew.Mark == 0 {
+		visitNew.Mark = visit.Mark
+	}
 
 	SetVisit(visitNew)
 
-	return 1, nil
+	return 1
 }

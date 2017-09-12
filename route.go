@@ -9,6 +9,8 @@ import (
 	"strconv"
 )
 
+var resp []byte = []byte("{}")
+
 func AvgVisits(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
@@ -118,7 +120,6 @@ func Visits(ctx *fasthttp.RequestCtx) {
 	var country = (string)(ctx.QueryArgs().Peek("country"))
 
 	id, err = strconv.Atoi(ctx.UserValue("id").(string))
-
 	if err != nil {
 		ctx.Error("", fasthttp.StatusNotFound)
 		return
@@ -132,13 +133,11 @@ func Visits(ctx *fasthttp.RequestCtx) {
 	}
 
 	visits, err = models.SelectVisits(id, fromDate, toDate, toDistance, country)
-
 	if err == sql.ErrNoRows {
 		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
-	ctx.SetContentType("application/json;charset=utf-8")
 	response, err := easyjson.Marshal(visits)
 	if err != nil {
 		ctx.Error("", fasthttp.StatusNotFound)

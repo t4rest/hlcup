@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/pkg/errors"
 	"sync"
 )
 
@@ -18,25 +17,23 @@ type Locations struct {
 }
 
 var locationMap map[int32]*Location
-var mutexLocation *sync.Mutex
+var mutexLocation *sync.RWMutex
 
 func init() {
 	locationMap = make(map[int32]*Location)
-	mutexLocation = &sync.Mutex{}
+	mutexLocation = &sync.RWMutex{}
 }
 
 func SetLocation(location *Location) {
 	mutexLocation.Lock()
-	defer mutexLocation.Unlock()
-
 	locationMap[location.ID] = location
+	mutexLocation.Unlock()
 }
 
 func GetLocation(id int32) (*Location, error) {
-	mutexLocation.Lock()
-	defer mutexLocation.Unlock()
-
+	mutexLocation.RLock()
 	location, ok := locationMap[id]
+	mutexLocation.RUnlock()
 
 	if !ok {
 		return location, NotFound
@@ -77,10 +74,7 @@ func ValidateLocationParams(params map[string]interface{}, scenario string) (res
 	return true
 }
 
-func UpdateLocation(location *Location, params map[string]interface{}, locationNew *Location) (int64, error) {
-	if len(params) < 1 {
-		return 0, errors.New("error")
-	}
+func UpdateLocation(location *Location, locationNew *Location) (int64) {
 
 	locationNew.ID = location.ID
 	if locationNew.Place == "" {
@@ -98,5 +92,5 @@ func UpdateLocation(location *Location, params map[string]interface{}, locationN
 
 	SetLocation(locationNew)
 
-	return 1, nil
+	return 1
 }
