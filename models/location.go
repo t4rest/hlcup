@@ -5,22 +5,22 @@ import (
 )
 
 type Location struct {
-	ID       int32  `json:"id"`
+	ID       int    `json:"id"`
 	Place    string `json:"place"`
 	Country  string `json:"country"`
 	City     string `json:"city"`
-	Distance int32  `json:"distance"`
+	Distance int    `json:"distance"`
 }
 
 type Locations struct {
 	Locations []*Location `json:"locations"`
 }
 
-var locationMap map[int32]*Location
+var locationMap map[int]*Location
 var mutexLocation *sync.RWMutex
 
 func init() {
-	locationMap = make(map[int32]*Location)
+	locationMap = make(map[int]*Location)
 	mutexLocation = &sync.RWMutex{}
 }
 
@@ -30,7 +30,7 @@ func SetLocation(location *Location) {
 	mutexLocation.Unlock()
 }
 
-func GetLocation(id int32) (*Location, error) {
+func GetLocation(id int) (*Location, error) {
 	mutexLocation.RLock()
 	location, ok := locationMap[id]
 	mutexLocation.RUnlock()
@@ -74,7 +74,7 @@ func ValidateLocationParams(params map[string]interface{}, scenario string) (res
 	return true
 }
 
-func UpdateLocation(location *Location, locationNew *Location) (int64) {
+func UpdateLocation(location *Location, locationNew *Location) int64 {
 
 	locationNew.ID = location.ID
 	if locationNew.Place == "" {

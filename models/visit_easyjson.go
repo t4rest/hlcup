@@ -215,11 +215,11 @@ func easyjsonE564fc13DecodeHighloadModels2(in *jlexer.Lexer, out *Visit) {
 		}
 		switch key {
 		case "id":
-			out.ID = int32(in.Int32())
+			out.ID = int(in.Int())
 		case "location":
-			out.LocationID = int32(in.Int32())
+			out.LocationID = int(in.Int())
 		case "user":
-			out.UserID = int32(in.Int32())
+			out.UserID = int(in.Int())
 		case "visited_at":
 			out.VisitedAt = int(in.Int())
 		case "mark":
@@ -244,20 +244,20 @@ func easyjsonE564fc13EncodeHighloadModels2(out *jwriter.Writer, in Visit) {
 		}
 		first = false
 		out.RawString("\"id\":")
-		out.Int32(int32(in.ID))
+		out.Int(int(in.ID))
 	}
 	if !first {
 		out.RawByte(',')
 	}
 	first = false
 	out.RawString("\"location\":")
-	out.Int32(int32(in.LocationID))
+	out.Int(int(in.LocationID))
 	if !first {
 		out.RawByte(',')
 	}
 	first = false
 	out.RawString("\"user\":")
-	out.Int32(int32(in.UserID))
+	out.Int(int(in.UserID))
 	if !first {
 		out.RawByte(',')
 	}
@@ -432,7 +432,7 @@ func easyjsonE564fc13DecodeHighloadModels4(in *jlexer.Lexer, out *UserVisits) {
 				if out.Location == nil {
 					out.Location = new(Location)
 				}
-				easyjsonE564fc13DecodeHighloadModels5(in, &*out.Location)
+				(*out.Location).UnmarshalEasyJSON(in)
 			}
 		case "User":
 			if in.IsNull() {
@@ -442,7 +442,7 @@ func easyjsonE564fc13DecodeHighloadModels4(in *jlexer.Lexer, out *UserVisits) {
 				if out.User == nil {
 					out.User = new(User)
 				}
-				easyjsonE564fc13DecodeHighloadModels6(in, &*out.User)
+				(*out.User).UnmarshalEasyJSON(in)
 			}
 		default:
 			in.SkipRecursive()
@@ -476,7 +476,7 @@ func easyjsonE564fc13EncodeHighloadModels4(out *jwriter.Writer, in UserVisits) {
 	if in.Location == nil {
 		out.RawString("null")
 	} else {
-		easyjsonE564fc13EncodeHighloadModels5(out, *in.Location)
+		(*in.Location).MarshalEasyJSON(out)
 	}
 	if !first {
 		out.RawByte(',')
@@ -486,7 +486,7 @@ func easyjsonE564fc13EncodeHighloadModels4(out *jwriter.Writer, in UserVisits) {
 	if in.User == nil {
 		out.RawString("null")
 	} else {
-		easyjsonE564fc13EncodeHighloadModels6(out, *in.User)
+		(*in.User).MarshalEasyJSON(out)
 	}
 	out.RawByte('}')
 }
@@ -514,165 +514,7 @@ func (v *UserVisits) UnmarshalJSON(data []byte) error {
 func (v *UserVisits) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonE564fc13DecodeHighloadModels4(l, v)
 }
-func easyjsonE564fc13DecodeHighloadModels6(in *jlexer.Lexer, out *User) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeString()
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "id":
-			out.ID = int32(in.Int32())
-		case "email":
-			out.Email = string(in.String())
-		case "first_name":
-			out.FirstName = string(in.String())
-		case "last_name":
-			out.LastName = string(in.String())
-		case "gender":
-			out.Gender = string(in.String())
-		case "birth_date":
-			out.BirthDate = int(in.Int())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonE564fc13EncodeHighloadModels6(out *jwriter.Writer, in User) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"id\":")
-	out.Int32(int32(in.ID))
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"email\":")
-	out.String(string(in.Email))
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"first_name\":")
-	out.String(string(in.FirstName))
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"last_name\":")
-	out.String(string(in.LastName))
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"gender\":")
-	out.String(string(in.Gender))
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"birth_date\":")
-	out.Int(int(in.BirthDate))
-	out.RawByte('}')
-}
-func easyjsonE564fc13DecodeHighloadModels5(in *jlexer.Lexer, out *Location) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeString()
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "id":
-			out.ID = int32(in.Int32())
-		case "place":
-			out.Place = string(in.String())
-		case "country":
-			out.Country = string(in.String())
-		case "city":
-			out.City = string(in.String())
-		case "distance":
-			out.Distance = int32(in.Int32())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonE564fc13EncodeHighloadModels5(out *jwriter.Writer, in Location) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"id\":")
-	out.Int32(int32(in.ID))
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"place\":")
-	out.String(string(in.Place))
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"country\":")
-	out.String(string(in.Country))
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"city\":")
-	out.String(string(in.City))
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"distance\":")
-	out.Int32(int32(in.Distance))
-	out.RawByte('}')
-}
-func easyjsonE564fc13DecodeHighloadModels7(in *jlexer.Lexer, out *UserVisit) {
+func easyjsonE564fc13DecodeHighloadModels5(in *jlexer.Lexer, out *UserVisit) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -707,7 +549,7 @@ func easyjsonE564fc13DecodeHighloadModels7(in *jlexer.Lexer, out *UserVisit) {
 		in.Consumed()
 	}
 }
-func easyjsonE564fc13EncodeHighloadModels7(out *jwriter.Writer, in UserVisit) {
+func easyjsonE564fc13EncodeHighloadModels5(out *jwriter.Writer, in UserVisit) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -735,27 +577,27 @@ func easyjsonE564fc13EncodeHighloadModels7(out *jwriter.Writer, in UserVisit) {
 // MarshalJSON supports json.Marshaler interface
 func (v UserVisit) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonE564fc13EncodeHighloadModels7(&w, v)
+	easyjsonE564fc13EncodeHighloadModels5(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v UserVisit) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonE564fc13EncodeHighloadModels7(w, v)
+	easyjsonE564fc13EncodeHighloadModels5(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *UserVisit) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonE564fc13DecodeHighloadModels7(&r, v)
+	easyjsonE564fc13DecodeHighloadModels5(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *UserVisit) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonE564fc13DecodeHighloadModels7(l, v)
+	easyjsonE564fc13DecodeHighloadModels5(l, v)
 }
-func easyjsonE564fc13DecodeHighloadModels8(in *jlexer.Lexer, out *LocationVisits) {
+func easyjsonE564fc13DecodeHighloadModels6(in *jlexer.Lexer, out *LocationVisits) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -792,7 +634,7 @@ func easyjsonE564fc13DecodeHighloadModels8(in *jlexer.Lexer, out *LocationVisits
 				if out.Location == nil {
 					out.Location = new(Location)
 				}
-				easyjsonE564fc13DecodeHighloadModels5(in, &*out.Location)
+				(*out.Location).UnmarshalEasyJSON(in)
 			}
 		case "User":
 			if in.IsNull() {
@@ -802,7 +644,7 @@ func easyjsonE564fc13DecodeHighloadModels8(in *jlexer.Lexer, out *LocationVisits
 				if out.User == nil {
 					out.User = new(User)
 				}
-				easyjsonE564fc13DecodeHighloadModels6(in, &*out.User)
+				(*out.User).UnmarshalEasyJSON(in)
 			}
 		default:
 			in.SkipRecursive()
@@ -814,7 +656,7 @@ func easyjsonE564fc13DecodeHighloadModels8(in *jlexer.Lexer, out *LocationVisits
 		in.Consumed()
 	}
 }
-func easyjsonE564fc13EncodeHighloadModels8(out *jwriter.Writer, in LocationVisits) {
+func easyjsonE564fc13EncodeHighloadModels6(out *jwriter.Writer, in LocationVisits) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -836,7 +678,7 @@ func easyjsonE564fc13EncodeHighloadModels8(out *jwriter.Writer, in LocationVisit
 	if in.Location == nil {
 		out.RawString("null")
 	} else {
-		easyjsonE564fc13EncodeHighloadModels5(out, *in.Location)
+		(*in.Location).MarshalEasyJSON(out)
 	}
 	if !first {
 		out.RawByte(',')
@@ -846,7 +688,7 @@ func easyjsonE564fc13EncodeHighloadModels8(out *jwriter.Writer, in LocationVisit
 	if in.User == nil {
 		out.RawString("null")
 	} else {
-		easyjsonE564fc13EncodeHighloadModels6(out, *in.User)
+		(*in.User).MarshalEasyJSON(out)
 	}
 	out.RawByte('}')
 }
@@ -854,23 +696,23 @@ func easyjsonE564fc13EncodeHighloadModels8(out *jwriter.Writer, in LocationVisit
 // MarshalJSON supports json.Marshaler interface
 func (v LocationVisits) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonE564fc13EncodeHighloadModels8(&w, v)
+	easyjsonE564fc13EncodeHighloadModels6(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v LocationVisits) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonE564fc13EncodeHighloadModels8(w, v)
+	easyjsonE564fc13EncodeHighloadModels6(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *LocationVisits) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonE564fc13DecodeHighloadModels8(&r, v)
+	easyjsonE564fc13DecodeHighloadModels6(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *LocationVisits) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonE564fc13DecodeHighloadModels8(l, v)
+	easyjsonE564fc13DecodeHighloadModels6(l, v)
 }

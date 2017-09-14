@@ -3,7 +3,7 @@ package main
 import (
 	"archive/zip"
 	"github.com/mailru/easyjson"
-	"highload/models"
+	"hl/models"
 	"io/ioutil"
 	"strings"
 )

@@ -2,43 +2,36 @@ package models
 
 import (
 	"errors"
-	"fmt"
-	"database/sql"
+	"os"
+	"strconv"
 )
 
 var (
-	db       *sql.DB
-	err      error
 	NotFound error = errors.New("NotFound")
 )
 
-type Condition struct {
-	Param         string
-	Value         string
-	Operator      string
-	JoinCondition string
-}
-
-type Join struct {
-	Name      string
-	Type      string
-	Condition Condition
-}
-
-type Sort struct {
-	Fields []string
-	Direction string
-}
-
 type FloatPrecision5 float32
 
-func (f FloatPrecision5) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("%.5f", f)), nil
-}
-
+var timeNow int
 
 func init() {
+	file, err := os.Open("/tmp/data/options.txt")
+	if err != nil {
+		file, err = os.Open("/home/andrey/go/src/hlcupdoc/data/FULL/data/options.txt")
+		if err != nil {
+			PanicOnErr(err)
+		}
+	}
+
+	timestampBytes := make([]byte, 10)
+	_, err = file.Read(timestampBytes)
+	PanicOnErr(err)
+
+	timeNow, err = strconv.Atoi(string(timestampBytes))
+	PanicOnErr(err)
+
 	println("on start")
+	println(timeNow)
 }
 
 //PanicOnErr panics on error
@@ -46,13 +39,4 @@ func PanicOnErr(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func StringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
 }

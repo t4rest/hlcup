@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
-	"highload/models"
+	"hl/models"
 	"strconv"
 )
 
@@ -25,7 +25,7 @@ func GetVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	id := int32(id64)
+	id := int(id64)
 
 	visit, err := models.GetVisit(id)
 	if err != nil {
@@ -74,20 +74,17 @@ func CreateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	//go func() {
-		models.SetVisit(visit)
-	//}()
+	models.SetVisit(visit)
 
 	ctx.SetBody(resp)
 }
 
 func UpdateVisit(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
-
-	param := ctx.UserValue("id")
-	var visitNew *models.Visit
 	var visit *models.Visit
 
+	param := ctx.UserValue("id")
+	visitNew := &models.Visit{}
 	if param == nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
 	}
@@ -109,7 +106,7 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	id := int32(id64)
+	id := int(id64)
 
 	visit, err = models.GetVisit(id)
 	if err != nil {
@@ -124,7 +121,7 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 
 	body := ctx.PostBody()
 
-	err = json.Unmarshal(body, &visitNew)
+	err = json.Unmarshal(body, visitNew)
 	if err != nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
@@ -143,9 +140,7 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	//go func() {
-		models.UpdateVisit(visit, visitNew)
-	//}()
+	models.UpdateVisit(visit, visitNew)
 
 	ctx.SetBody(resp)
 }

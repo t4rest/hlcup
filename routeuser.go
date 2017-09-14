@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
-	"highload/models"
+	"hl/models"
 	"strconv"
 )
 
@@ -25,7 +25,7 @@ func GetUser(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	id := int32(id64)
+	id := int(id64)
 
 	user, err := models.GetUser(id)
 	if err != nil {
@@ -110,7 +110,7 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	id := int32(id64)
+	id := int(id64)
 
 	user, err = models.GetUser(id)
 	if err != nil {

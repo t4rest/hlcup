@@ -148,7 +148,7 @@ func easyjson14b80819DecodeHighloadModels1(in *jlexer.Lexer, out *Location) {
 		}
 		switch key {
 		case "id":
-			out.ID = int32(in.Int32())
+			out.ID = int(in.Int())
 		case "place":
 			out.Place = string(in.String())
 		case "country":
@@ -156,7 +156,7 @@ func easyjson14b80819DecodeHighloadModels1(in *jlexer.Lexer, out *Location) {
 		case "city":
 			out.City = string(in.String())
 		case "distance":
-			out.Distance = int32(in.Int32())
+			out.Distance = int(in.Int())
 		default:
 			in.SkipRecursive()
 		}
@@ -176,7 +176,7 @@ func easyjson14b80819EncodeHighloadModels1(out *jwriter.Writer, in Location) {
 	}
 	first = false
 	out.RawString("\"id\":")
-	out.Int32(int32(in.ID))
+	out.Int(int(in.ID))
 	if !first {
 		out.RawByte(',')
 	}
@@ -200,7 +200,7 @@ func easyjson14b80819EncodeHighloadModels1(out *jwriter.Writer, in Location) {
 	}
 	first = false
 	out.RawString("\"distance\":")
-	out.Int32(int32(in.Distance))
+	out.Int(int(in.Distance))
 	out.RawByte('}')
 }
 

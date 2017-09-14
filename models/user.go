@@ -5,7 +5,7 @@ import (
 )
 
 type User struct {
-	ID        int32  `json:"id"`
+	ID        int    `json:"id"`
 	Email     string `json:"email"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -18,11 +18,11 @@ type Users struct {
 	Users []*User `json:"users"`
 }
 
-var userMap map[int32]*User
+var userMap map[int]*User
 var mutexUser *sync.RWMutex
 
 func init() {
-	userMap = make(map[int32]*User)
+	userMap = make(map[int]*User)
 	mutexUser = &sync.RWMutex{}
 }
 
@@ -33,7 +33,7 @@ func SetUser(user *User) {
 
 }
 
-func GetUser(id int32) (*User, error) {
+func GetUser(id int) (*User, error) {
 	mutexUser.RLock()
 	user, ok := userMap[id]
 	mutexUser.RUnlock()
@@ -77,14 +77,24 @@ func ValidateUserParams(params map[string]interface{}, scenario string) (result 
 	return true
 }
 
-func UpdateUser(user *User, userNew *User) (int64) {
+func UpdateUser(user *User, userNew *User) int64 {
 
 	userNew.ID = user.ID
-	if userNew.BirthDate == 0 { userNew.BirthDate = user.BirthDate }
-	if userNew.Gender == "" { userNew.Gender = user.Gender }
-	if userNew.FirstName == "" { userNew.FirstName = user.FirstName }
-	if userNew.LastName == "" { userNew.LastName = user.LastName }
-	if userNew.Email == "" { userNew.Email = user.Email }
+	if userNew.BirthDate == 0 {
+		userNew.BirthDate = user.BirthDate
+	}
+	if userNew.Gender == "" {
+		userNew.Gender = user.Gender
+	}
+	if userNew.FirstName == "" {
+		userNew.FirstName = user.FirstName
+	}
+	if userNew.LastName == "" {
+		userNew.LastName = user.LastName
+	}
+	if userNew.Email == "" {
+		userNew.Email = user.Email
+	}
 
 	SetUser(userNew)
 

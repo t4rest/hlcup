@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
-	"highload/models"
+	"hl/models"
 	"strconv"
 )
 
@@ -23,7 +23,7 @@ func GetLocation(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	id := int32(id64)
+	id := int(id64)
 
 	location, err := models.GetLocation(id)
 	if err != nil {
@@ -107,7 +107,7 @@ func UpdateLocation(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	id := int32(id64)
+	id := int(id64)
 
 	location, err = models.GetLocation(id)
 	if err != nil {

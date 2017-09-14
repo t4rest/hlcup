@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
-	"highload/models"
+	"hl/models"
 	"strconv"
 )
 
@@ -14,68 +14,53 @@ var resp []byte = []byte("{}")
 func AvgVisits(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	var id, fromDate, toDate, fromAge, toAge int
-	var err error
-
-	if ctx.QueryArgs().Has("fromDate") {
-		fromDate, err = ctx.QueryArgs().GetUint("fromDate")
-
-		if err != nil {
-			ctx.Error("", fasthttp.StatusBadRequest)
-			return
-		}
-	}
-
-	if ctx.QueryArgs().Has("toDate") {
-		toDate, err = ctx.QueryArgs().GetUint("toDate")
-
-		if err != nil {
-			ctx.Error("", fasthttp.StatusBadRequest)
-			return
-		}
-	}
-	if ctx.QueryArgs().Has("fromAge") {
-		fromAge, err = ctx.QueryArgs().GetUint("fromAge")
-
-		if err != nil {
-			ctx.Error("", fasthttp.StatusBadRequest)
-			return
-		}
-	}
-	if ctx.QueryArgs().Has("toAge") {
-		toAge, err = ctx.QueryArgs().GetUint("toAge")
-
-		if err != nil {
-			ctx.Error("", fasthttp.StatusBadRequest)
-			return
-		}
-	}
-
-	var gender = (string)(ctx.QueryArgs().Peek("gender"))
-
+	var id int
 	var avg float64
-	id, err = strconv.Atoi(ctx.UserValue("id").(string))
 
+	fromDate, err := strconv.Atoi(string(ctx.FormValue("fromDate")))
+	if len(ctx.FormValue("fromDate")) != 0 && err != nil {
+		ctx.Error("", fasthttp.StatusBadRequest)
+		return
+	}
+
+	toDate, err := strconv.Atoi(string(ctx.FormValue("toDate")))
+	if len(ctx.FormValue("toDate")) != 0 && err != nil {
+		ctx.Error("", fasthttp.StatusBadRequest)
+		return
+	}
+
+	fromAge, err := strconv.Atoi(string(ctx.FormValue("fromAge")))
+	if len(ctx.FormValue("fromAge")) != 0 && err != nil {
+		ctx.Error("", fasthttp.StatusBadRequest)
+		return
+	}
+
+	toAge, err := strconv.Atoi(string(ctx.FormValue("toAge")))
+	if len(ctx.FormValue("toAge")) != 0 && err != nil {
+		ctx.Error("", fasthttp.StatusBadRequest)
+		return
+	}
+
+	gender := string(ctx.FormValue("gender"))
+	if gender != "" && gender != "f" && gender != "m" {
+		ctx.Error("", fasthttp.StatusBadRequest)
+		return
+	}
+
+	id, err = strconv.Atoi(ctx.UserValue("id").(string))
 	if err != nil {
 		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
-	if gender != "" && !(gender == "m" || gender == "f") {
-		ctx.Error("", fasthttp.StatusBadRequest)
-		return
-	}
-
-	_, err = models.GetLocation(int32(id))
-
+	_, err = models.GetLocation(id)
 	if err == models.NotFound {
 		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
 	avg, err = models.GetAverage(id, fromDate, toDate, fromAge, toAge, gender)
-
-	if err == sql.ErrNoRows {
+	if err != nil {
 		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
 		return
 	}
@@ -86,47 +71,35 @@ func AvgVisits(ctx *fasthttp.RequestCtx) {
 func Visits(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	var id, fromDate, toDate, toDistance int
-	var err error
 	var visits models.UserVisitsSl
 
-	if ctx.QueryArgs().Has("fromDate") {
-		fromDate, err = ctx.QueryArgs().GetUint("fromDate")
-
-		if err != nil {
-			ctx.Error("", fasthttp.StatusBadRequest)
-			return
-		}
-	}
-
-	if ctx.QueryArgs().Has("toDate") {
-		toDate, err = ctx.QueryArgs().GetUint("toDate")
-
-		if err != nil {
-			ctx.Error("", fasthttp.StatusBadRequest)
-			return
-		}
-	}
-
-	if ctx.QueryArgs().Has("toDistance") {
-		toDistance, err = ctx.QueryArgs().GetUint("toDistance")
-
-		if err != nil {
-			ctx.Error("", fasthttp.StatusBadRequest)
-			return
-		}
-	}
-
-	var country = (string)(ctx.QueryArgs().Peek("country"))
-
-	id, err = strconv.Atoi(ctx.UserValue("id").(string))
-	if err != nil {
-		ctx.Error("", fasthttp.StatusNotFound)
+	fromDate, err := strconv.Atoi(string(ctx.FormValue("fromDate")))
+	if len(ctx.FormValue("fromDate")) != 0 && err != nil {
+		ctx.Error("Unsupported path", fasthttp.StatusBadRequest)
 		return
 	}
 
-	_, err = models.GetUser(int32(id))
+	toDate, err := strconv.Atoi(string(ctx.FormValue("toDate")))
+	if len(ctx.FormValue("toDate")) != 0 && err != nil {
+		ctx.Error("Unsupported path", fasthttp.StatusBadRequest)
+		return
+	}
 
+	toDistance, err := strconv.Atoi(string(ctx.FormValue("toDistance")))
+	if len(ctx.FormValue("toDistance")) != 0 && err != nil {
+		ctx.Error("Unsupported path", fasthttp.StatusBadRequest)
+		return
+	}
+
+	country := string(ctx.FormValue("country"))
+
+	id, err := strconv.Atoi(ctx.UserValue("id").(string))
+	if err != nil {
+		ctx.Error("", fasthttp.StatusBadRequest)
+		return
+	}
+
+	_, err = models.GetUser(id)
 	if err == models.NotFound {
 		ctx.Error("", fasthttp.StatusNotFound)
 		return

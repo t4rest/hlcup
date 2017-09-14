@@ -3,13 +3,12 @@ package models
 import (
 	"sort"
 	"sync"
-	"time"
 )
 
 type Visit struct {
-	ID         int32 `json:"id,omitempty"`
-	LocationID int32 `json:"location"`
-	UserID     int32 `json:"user"`
+	ID         int   `json:"id,omitempty"`
+	LocationID int   `json:"location"`
+	UserID     int   `json:"user"`
 	VisitedAt  int   `json:"visited_at"`
 	Mark       uint8 `json:"mark"`
 }
@@ -44,20 +43,16 @@ type LocationVisits struct {
 	User     *User
 }
 
-var visitMap map[int32]*Visit
-var userVisitMap map[int32][]UserVisits
-var locationVisitMap map[int32][]LocationVisits
+var visitMap map[int]*Visit
+var userVisitMap map[int][]UserVisits
+var locationVisitMap map[int][]LocationVisits
 var mutexVisit *sync.RWMutex
 var mutexUserVisit *sync.RWMutex
 
-var timeNow int64 = time.Now().UnixNano() / int64(time.Millisecond)
-
-const oneYear = 31557600
-
 func init() {
-	visitMap = make(map[int32]*Visit)
-	userVisitMap = make(map[int32][]UserVisits)
-	locationVisitMap = make(map[int32][]LocationVisits)
+	visitMap = make(map[int]*Visit)
+	userVisitMap = make(map[int][]UserVisits)
+	locationVisitMap = make(map[int][]LocationVisits)
 	mutexVisit = &sync.RWMutex{}
 	mutexUserVisit = &sync.RWMutex{}
 }
@@ -82,7 +77,7 @@ func SetVisit(visit *Visit) {
 	mutexVisit.Unlock()
 }
 
-func GetVisit(id int32) (*Visit, error) {
+func GetVisit(id int) (*Visit, error) {
 	mutexVisit.RLock()
 	visit, ok := visitMap[id]
 	mutexVisit.RUnlock()
@@ -103,16 +98,14 @@ func InsertVisits(visits Visits) {
 func InsertVisit(visit *Visit) {
 	SetVisit(visit)
 
-	mutexUserVisit.Lock()
-
 	user, err1 := GetUser(visit.UserID)
 	location, err2 := GetLocation(visit.LocationID)
 
+	mutexUserVisit.Lock()
 	if err1 == nil && err2 == nil {
 		userVisitMap[visit.UserID] = append(userVisitMap[visit.UserID], UserVisits{visit, location, user})
 		locationVisitMap[visit.LocationID] = append(locationVisitMap[visit.LocationID], LocationVisits{visit, location, user})
 	}
-
 	mutexUserVisit.Unlock()
 }
 
@@ -142,31 +135,27 @@ func GetAverage(id, fromDate, toDate, fromAge, toAge int, gender string) (float6
 	var avg float64 = 0
 
 	var marksSum uint8 = 0
-	var markCount int64 = 0
+	var markCount int = 0
 
-	for _, sl := range locationVisitMap[int32(id)] {
+	for _, sl := range locationVisitMap[id] {
 
-		if fromDate > 0 && fromDate > sl.Visit.VisitedAt {
+		if fromDate != 0 && fromDate > sl.Visit.VisitedAt {
 			continue
 		}
 
-		if toDate > 0 && toDate < sl.Visit.VisitedAt {
+		if toDate != 0 && toDate < sl.Visit.VisitedAt  {
 			continue
 		}
 
-		if fromAge > 0 {
-			if !((float64(time.Now().Unix())-float64(sl.User.BirthDate))/31557600 > float64(fromAge)) {
-				continue
-			}
+		if len(gender) != 0 && sl.User.Gender != gender {
+			continue
 		}
 
-		if toAge > 0 {
-			if !((float64(time.Now().Unix())-float64(sl.User.BirthDate))/31557600 < float64(toAge)) {
-				continue
-			}
+		if fromAge != 0 && timeNow-sl.User.BirthDate < fromAge*31557600 {
+			continue
 		}
 
-		if len(gender) > 0 && gender != sl.User.Gender {
+		if toAge != 0 && timeNow-sl.User.BirthDate > toAge*31557600 {
 			continue
 		}
 
@@ -185,21 +174,21 @@ func SelectVisits(id, fromDate, toDate, toDistance int, country string) (UserVis
 	var userVisitsSl UserVisitsSl
 	var userVisits = UserVisitSt{}
 
-	for _, sl := range userVisitMap[int32(id)] {
+	for _, sl := range userVisitMap[id] {
 
-		if fromDate > 0 && fromDate > sl.Visit.VisitedAt {
+		if fromDate != 0 && sl.Visit.VisitedAt <= fromDate {
 			continue
 		}
 
-		if toDate > 0 && toDate < sl.Visit.VisitedAt {
+		if toDate != 0 && sl.Visit.VisitedAt >= toDate {
 			continue
 		}
 
-		if len(country) > 0 && country != sl.Location.Country {
+		if len(country) != 0 && sl.Location.Country != country {
 			continue
 		}
 
-		if toDistance > 0 && int32(toDistance) <= sl.Location.Distance {
+		if toDistance != 0 && toDistance <= sl.Location.Distance {
 			continue
 		}
 

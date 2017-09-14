@@ -5,7 +5,11 @@ import (
 
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
+	"runtime/debug"
 )
+
+var currentTime int
+
 
 func main() {
 
@@ -14,6 +18,7 @@ func main() {
 	if err != nil {
 		println(err.Error())
 	}
+	debug.SetGCPercent(-1)
 
 	router := fasthttprouter.New()
 

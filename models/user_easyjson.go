@@ -148,7 +148,7 @@ func easyjson9e1087fdDecodeHighloadModels1(in *jlexer.Lexer, out *User) {
 		}
 		switch key {
 		case "id":
-			out.ID = int32(in.Int32())
+			out.ID = int(in.Int())
 		case "email":
 			out.Email = string(in.String())
 		case "first_name":
@@ -178,7 +178,7 @@ func easyjson9e1087fdEncodeHighloadModels1(out *jwriter.Writer, in User) {
 	}
 	first = false
 	out.RawString("\"id\":")
-	out.Int32(int32(in.ID))
+	out.Int(int(in.ID))
 	if !first {
 		out.RawByte(',')
 	}
