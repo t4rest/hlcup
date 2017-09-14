@@ -76,7 +76,7 @@ func CreateUser(ctx *fasthttp.RequestCtx) {
 	}
 
 	//go func() {
-		models.SetUser(user)
+	models.SetUser(user)
 	//}()
 
 	ctx.SetBody(resp)
@@ -145,9 +145,7 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	//go func() {
-		models.UpdateUser(user, userNew)
-	//}()
+	models.UpdateUser(user, userNew)
 
 	ctx.SetContentType("application/json;charset=utf-8")
 	ctx.SetBody(resp)

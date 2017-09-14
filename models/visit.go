@@ -139,23 +139,23 @@ func GetAverage(id, fromDate, toDate, fromAge, toAge int, gender string) (float6
 
 	for _, sl := range locationVisitMap[id] {
 
-		if fromDate != 0 && fromDate > sl.Visit.VisitedAt {
+		if fromDate != 0 && sl.Visit.VisitedAt <= fromDate {
 			continue
 		}
 
-		if toDate != 0 && toDate < sl.Visit.VisitedAt  {
+		if toDate != 0 && sl.Visit.VisitedAt >= toDate {
 			continue
 		}
 
-		if len(gender) != 0 && sl.User.Gender != gender {
+		if len(gender) != 0 && gender != sl.User.Gender {
 			continue
 		}
 
-		if fromAge != 0 && timeNow-sl.User.BirthDate < fromAge*31557600 {
+		if fromAge != 0 && fromAge*31557600 >= timeNow-sl.User.BirthDate {
 			continue
 		}
 
-		if toAge != 0 && timeNow-sl.User.BirthDate > toAge*31557600 {
+		if toAge != 0 && toAge <= int((timeNow-sl.User.BirthDate)/31557600) {
 			continue
 		}
 
@@ -202,23 +202,20 @@ func SelectVisits(id, fromDate, toDate, toDistance int, country string) (UserVis
 	return userVisitsSl, nil
 }
 
-func UpdateVisit(visit *Visit, visitNew *Visit) int64 {
+func UpdateVisit(visit *Visit, visitNew *Visit) int {
 
-	visitNew.ID = visit.ID
-	if visitNew.LocationID == 0 {
-		visitNew.LocationID = visit.LocationID
+	if visitNew.LocationID != 0 {
+		visit.LocationID = visitNew.LocationID
 	}
-	if visitNew.UserID == 0 {
-		visitNew.UserID = visit.UserID
+	if visitNew.UserID != 0 {
+		visit.UserID = visitNew.UserID
 	}
-	if visitNew.VisitedAt == 0 {
-		visitNew.VisitedAt = visit.VisitedAt
+	if visitNew.VisitedAt != 0 {
+		visit.VisitedAt = visitNew.VisitedAt
 	}
-	if visitNew.Mark == 0 {
-		visitNew.Mark = visit.Mark
+	if visitNew.Mark != 0 {
+		visit.Mark = visitNew.Mark
 	}
-
-	SetVisit(visitNew)
 
 	return 1
 }

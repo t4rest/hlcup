@@ -74,23 +74,20 @@ func ValidateLocationParams(params map[string]interface{}, scenario string) (res
 	return true
 }
 
-func UpdateLocation(location *Location, locationNew *Location) int64 {
+func UpdateLocation(location *Location, locationNew *Location) int {
 
-	locationNew.ID = location.ID
-	if locationNew.Place == "" {
-		locationNew.Place = location.Place
+	if locationNew.Place != "" {
+		location.Place = locationNew.Place
 	}
-	if locationNew.Country == "" {
-		locationNew.Country = location.Country
+	if locationNew.Country != "" {
+		location.Country = locationNew.Country
 	}
-	if locationNew.City == "" {
-		locationNew.City = location.City
+	if locationNew.City != "" {
+		location.City = locationNew.City
 	}
-	if locationNew.Distance == 0 {
-		locationNew.Distance = location.Distance
+	if locationNew.Distance != 0 {
+		location.Distance = locationNew.Distance
 	}
-
-	SetLocation(locationNew)
 
 	return 1
 }

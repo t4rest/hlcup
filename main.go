@@ -8,9 +8,6 @@ import (
 	"runtime/debug"
 )
 
-var currentTime int
-
-
 func main() {
 
 	err := ImportDataFromZip()

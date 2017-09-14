@@ -77,26 +77,23 @@ func ValidateUserParams(params map[string]interface{}, scenario string) (result 
 	return true
 }
 
-func UpdateUser(user *User, userNew *User) int64 {
+func UpdateUser(user *User, userNew *User) int {
 
-	userNew.ID = user.ID
-	if userNew.BirthDate == 0 {
-		userNew.BirthDate = user.BirthDate
+	if userNew.BirthDate != 0 {
+		user.BirthDate = userNew.BirthDate
 	}
-	if userNew.Gender == "" {
-		userNew.Gender = user.Gender
+	if userNew.Gender != "" {
+		user.Gender = userNew.Gender
 	}
-	if userNew.FirstName == "" {
-		userNew.FirstName = user.FirstName
+	if userNew.FirstName != "" {
+		user.FirstName = userNew.FirstName
 	}
-	if userNew.LastName == "" {
-		userNew.LastName = user.LastName
+	if userNew.LastName != "" {
+		user.LastName = userNew.LastName
 	}
-	if userNew.Email == "" {
-		userNew.Email = user.Email
+	if userNew.Email != "" {
+		user.Email = userNew.Email
 	}
-
-	SetUser(userNew)
 
 	return 1
 }

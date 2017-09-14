@@ -15,7 +15,7 @@ RUN rpm -U http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-relea
 # Устанавливаем Go, создаем workspace и папку проекта
 RUN tar -C /usr/local -xzf go1.9.linux-amd64.tar.gz && \
     mkdir go && mkdir go/src && mkdir go/bin && mkdir go/pkg && \
-    mkdir go/src/highload
+    mkdir go/src/hl
 RUN mkdir data
 
 RUN yum install zip & yum install unzip -y
