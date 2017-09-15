@@ -1,43 +1,29 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
 	"hl/models"
 	"strconv"
+	"strings"
 )
 
 func GetLocation(ctx *fasthttp.RequestCtx) {
-	param := ctx.UserValue("id")
-	strId, ok := param.(string)
+	ctx.SetContentType("application/json;charset=utf-8")
 
-	if !ok {
+	param := string(ctx.UserValue("id"))
+	id, err := strconv.Atoi(param)
+	if err {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
-
-	id64, err := strconv.ParseInt(strId, 10, 32)
-	if err != nil {
-		ctx.Error("", fasthttp.StatusBadRequest)
-		return
-	}
-
-	id := int(id64)
 
 	location, err := models.GetLocation(id)
-	if err != nil {
-
-		if err == models.NotFound {
-			ctx.Error("", fasthttp.StatusNotFound)
-			return
-		}
-
-		ctx.Error("", fasthttp.StatusBadRequest)
+	if err == models.NotFound {
+		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
-	ctx.SetContentType("application/json;charset=utf-8")
 	response, err := easyjson.Marshal(location)
 	if err != nil {
 		ctx.Error("", fasthttp.StatusNotFound)
@@ -50,42 +36,27 @@ func GetLocation(ctx *fasthttp.RequestCtx) {
 func CreateLocation(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	location := &models.Location{}
-	var err error
-	// check params
-	err = easyjson.Unmarshal(ctx.PostBody(), location)
+	location := models.Location{}
 
+	body := ctx.PostBody()
+	if len(body) == 0 || strings.Contains(string(body), "null") {
+		ctx.Response.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+
+	err := easyjson.Unmarshal(body, &location)
 	if err != nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
-	var params map[string]interface{}
 
-	err = json.Unmarshal(ctx.PostBody(), &params)
-	if err != nil {
-		ctx.Error("", fasthttp.StatusBadRequest)
-		return
-	}
-
-	if !models.ValidateLocationParams(params, "insert") {
-		ctx.Error("", fasthttp.StatusBadRequest)
-		return
-	}
-
-	//go func() {
-		models.SetLocation(location)
-	//}()
+	models.SetLocation(location)
 
 	ctx.SetBody(resp)
 }
 
 func UpdateLocation(ctx *fasthttp.RequestCtx) {
-	ctx.SetContentType("application/json;charset=utf-8")
-
-	var location *models.Location
 	param := ctx.UserValue("id")
-	locationNew := &models.Location{}
-
 	if param == nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
 	}
@@ -95,56 +66,40 @@ func UpdateLocation(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	strId, ok := param.(string)
-	if !ok {
+	ctx.SetContentType("application/json;charset=utf-8")
+
+	id, err := strconv.Atoi(string(param))
+	if err {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
-	id64, err := strconv.ParseInt(strId, 10, 32)
-	if err != nil {
+	location, err := models.GetLocation(id)
+	if err == models.NotFound {
 		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
-	id := int(id64)
-
-	location, err = models.GetLocation(id)
-	if err != nil {
-
-		if err == models.NotFound {
-			ctx.Error("", fasthttp.StatusNotFound)
-			return
-		}
-
-		ctx.Error("", fasthttp.StatusBadRequest)
-		return
-	}
-
+	locationNew := models.Location{}
 	body := ctx.PostBody()
 
-	err = easyjson.Unmarshal(body, locationNew)
+	if len(body) == 0 || strings.Contains(string(body), "null") {
+		ctx.Response.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+
+	err = easyjson.Unmarshal(body, &locationNew)
 	if err != nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
-	var params map[string]interface{}
-
-	err = json.Unmarshal(ctx.PostBody(), &params)
-	if err != nil {
+	if locationNew.Id != 0 {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
-	if !models.ValidateUserParams(params, "update") {
-		ctx.Error("", fasthttp.StatusBadRequest)
-		return
-	}
-
-	//go func() {
-		models.UpdateLocation(location, locationNew)
-	//}()
+	models.UpdateLocation(location, locationNew)
 
 	ctx.SetBody(resp)
 }

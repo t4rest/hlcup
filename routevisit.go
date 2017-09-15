@@ -1,47 +1,32 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
 	"hl/models"
 	"strconv"
+	"strings"
 )
 
 func GetVisit(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	param := ctx.UserValue("id")
-	strId, ok := param.(string)
-
-	if !ok {
+	param := string(ctx.UserValue("id"))
+	id, err := strconv.Atoi(param)
+	if err {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
-
-	id64, err := strconv.ParseInt(strId, 10, 32)
-	if err != nil {
-		ctx.Error("", fasthttp.StatusBadRequest)
-		return
-	}
-
-	id := int(id64)
 
 	visit, err := models.GetVisit(id)
-	if err != nil {
-
-		if err == models.NotFound {
-			ctx.Error("", fasthttp.StatusNotFound)
-			return
-		}
-
-		ctx.Error("", fasthttp.StatusBadRequest)
+	if err == models.NotFound {
+		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
 	response, err := easyjson.Marshal(visit)
 	if err != nil {
-		ctx.Error("", fasthttp.StatusNotFound)
+		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
@@ -51,25 +36,16 @@ func GetVisit(ctx *fasthttp.RequestCtx) {
 func CreateVisit(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	visit := &models.Visit{}
+	visit := models.Visit{}
 
-	// check params
-	err := easyjson.Unmarshal(ctx.PostBody(), visit)
-
-	if err != nil {
-		ctx.Error("", fasthttp.StatusBadRequest)
+	body := ctx.PostBody()
+	if len(body) == 0 || strings.Contains(string(body), "null") {
+		ctx.Response.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
 
-	var params map[string]interface{}
-
-	err = json.Unmarshal(ctx.PostBody(), &params)
+	err := easyjson.Unmarshal(body, &visit)
 	if err != nil {
-		ctx.Error("", fasthttp.StatusBadRequest)
-		return
-	}
-
-	if !models.ValidateVsitParams(params, "insert") {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
@@ -80,11 +56,7 @@ func CreateVisit(ctx *fasthttp.RequestCtx) {
 }
 
 func UpdateVisit(ctx *fasthttp.RequestCtx) {
-	ctx.SetContentType("application/json;charset=utf-8")
-	var visit *models.Visit
-
 	param := ctx.UserValue("id")
-	visitNew := &models.Visit{}
 	if param == nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
 	}
@@ -94,48 +66,35 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	strId, ok := param.(string)
-	if !ok {
+	ctx.SetContentType("application/json;charset=utf-8")
+
+	id, err := strconv.Atoi(string(param))
+	if err {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
-	id64, err := strconv.ParseInt(strId, 10, 32)
-	if err != nil {
+	visit, err := models.GetVisit(id)
+	if err == models.NotFound {
 		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
-	id := int(id64)
-
-	visit, err = models.GetVisit(id)
-	if err != nil {
-		if err == models.NotFound {
-			ctx.Error("", fasthttp.StatusNotFound)
-			return
-		}
-
-		ctx.Error("", fasthttp.StatusBadRequest)
-		return
-	}
-
+	visitNew := models.Visit{}
 	body := ctx.PostBody()
 
-	err = json.Unmarshal(body, visitNew)
+	if len(body) == 0 || strings.Contains(string(body), "null") {
+		ctx.Response.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+
+	err = easyjson.Unmarshal(body, &visitNew)
 	if err != nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
 
-	var params map[string]interface{}
-
-	err = json.Unmarshal(ctx.PostBody(), &params)
-	if err != nil {
-		ctx.Error("", fasthttp.StatusBadRequest)
-		return
-	}
-
-	if !models.ValidateVsitParams(params, "update") {
+	if visitNew.Id != 0 {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
