@@ -11,9 +11,9 @@ import (
 func GetLocation(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	param := string(ctx.UserValue("id"))
+	param := ctx.UserValue("id").(string)
 	id, err := strconv.Atoi(param)
-	if err {
+	if err != nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}
@@ -68,8 +68,8 @@ func UpdateLocation(ctx *fasthttp.RequestCtx) {
 
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	id, err := strconv.Atoi(string(param))
-	if err {
+	id, err := strconv.Atoi(param.(string))
+	if err != nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
 		return
 	}

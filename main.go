@@ -31,5 +31,5 @@ func main() {
 	router.GET("/users/:id/visits", Visits)
 	router.GET("/locations/:id/avg", AvgVisits)
 
-	log.Fatal(fasthttp.ListenAndServe(":80", router.Handler))
+	log.Fatal(fasthttp.ListenAndServe(":8080", router.Handler))
 }

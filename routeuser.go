@@ -12,10 +12,10 @@ import (
 func GetUser(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	param := string(ctx.UserValue("id"))
+	param := ctx.UserValue("id").(string)
 	id, err := strconv.Atoi(param)
-	if err {
-		ctx.Error("", fasthttp.StatusBadRequest)
+	if err != nil {
+		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
@@ -72,9 +72,9 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	id, err := strconv.Atoi(string(param))
-	if err {
-		ctx.Error("", fasthttp.StatusBadRequest)
+	id, err := strconv.Atoi(param.(string))
+	if err != nil {
+		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
@@ -103,7 +103,7 @@ func UpdateUser(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	models.UpdateUser(user, userNew)
+	models.UpdateUser(user, userNew, strings.Contains(string(body), "birth_date"))
 
 	ctx.SetBody(resp)
 }

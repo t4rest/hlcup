@@ -11,10 +11,10 @@ import (
 func GetVisit(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json;charset=utf-8")
 
-	param := string(ctx.UserValue("id"))
+	param := ctx.UserValue("id").(string)
 	id, err := strconv.Atoi(param)
-	if err {
-		ctx.Error("", fasthttp.StatusBadRequest)
+	if err != nil {
+		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 
@@ -50,12 +50,14 @@ func CreateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	models.SetVisit(visit)
+	models.SetVisit(visit, false)
 
 	ctx.SetBody(resp)
 }
 
 func UpdateVisit(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json;charset=utf-8")
+
 	param := ctx.UserValue("id")
 	if param == nil {
 		ctx.Error("", fasthttp.StatusBadRequest)
@@ -66,11 +68,9 @@ func UpdateVisit(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	ctx.SetContentType("application/json;charset=utf-8")
-
-	id, err := strconv.Atoi(string(param))
-	if err {
-		ctx.Error("", fasthttp.StatusBadRequest)
+	id, err := strconv.Atoi(param.(string))
+	if err != nil {
+		ctx.Error("", fasthttp.StatusNotFound)
 		return
 	}
 

@@ -39,12 +39,8 @@ func GetLocation(id int) (Location, error) {
 
 func InsertLocations(locations Locations) {
 	for _, location := range locations.Locations {
-		InsertLocation(location)
+		SetLocation(location)
 	}
-}
-
-func InsertLocation(location Location) {
-	SetLocation(location)
 }
 
 func UpdateLocation(location Location, locationNew Location) int {

@@ -3,24 +3,23 @@ package models
 import (
 	"errors"
 	"os"
+	"sort"
 	"strconv"
 	"sync"
-	"sort"
 )
 
 var (
-	NotFound error = errors.New("NotFound")
-	timeNow int
-	userVisitMap map[int][]int
-	locationVisitMap map[int][]int
-	mutexUserVisit = &sync.RWMutex{}
+	NotFound         error = errors.New("NotFound")
+	timeNow          int
+	userVisitMap     = make(map[int][]int)
+	locationVisitMap = make(map[int][]int)
+	mutexUserVisit   = &sync.RWMutex{}
 )
-
 
 type FloatPrecision5 float32
 
 type UserVisit struct {
-	Mark      uint8  `json:"mark"`
+	Mark      int    `json:"mark"`
 	VisitedAt int    `json:"visited_at"`
 	Place     string `json:"place"`
 }
@@ -37,6 +36,7 @@ func init() {
 			PanicOnErr(err)
 		}
 	}
+	defer file.Close()
 
 	timestampBytes := make([]byte, 10)
 	_, err = file.Read(timestampBytes)
@@ -60,35 +60,100 @@ func (slice UserVisitSt) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-func GetAverage(id, fromDate, toDate, fromAge, toAge int, gender string) (float64, error) {
+func SetVisits(visit Visit) {
+	//user, err1 := GetUser(visit.User)
+	//location, err2 := GetLocation(visit.Location)
+
+	mutexUserVisit.Lock()
+	//if err1 == nil && err2 == nil {
+	if uv, ok := userVisitMap[visit.User]; ok {
+		userVisitMap[visit.User] = append(uv, visit.Id)
+	} else {
+		userVisitMap[visit.User] = []int{visit.Id}
+	}
+
+	if lv, ok := locationVisitMap[visit.Location]; ok {
+		locationVisitMap[visit.Location] = append(lv, visit.Id)
+	} else {
+		locationVisitMap[visit.Location] = []int{visit.Id}
+	}
+
+	//fmt.Println(userVisitMap[visit.User])
+	//fmt.Println(locationVisitMap[visit.Location])
+
+	//}
+	mutexUserVisit.Unlock()
+}
+
+func updateUsetLocationVisit(visit Visit) {
+	mutexUserVisit.Lock()
+
+	oldUserId := visitMap[visit.Id].User
+	if oldUserId != visit.User {
+		for i, uv := range userVisitMap[oldUserId] {
+			if uv == visit.Id {
+				userVisitMap[oldUserId] = remove(userVisitMap[oldUserId], i)
+				userVisitMap[visit.User] = append(userVisitMap[visit.User], visit.Id)
+				break
+			}
+		}
+	}
+	oldLocationId := visitMap[visit.Id].Location
+	if oldLocationId != visit.Location {
+		for i, lv := range locationVisitMap[oldLocationId] {
+			if lv == visit.Id {
+				locationVisitMap[oldLocationId] = remove(locationVisitMap[oldLocationId], i)
+				locationVisitMap[visit.Location] = append(locationVisitMap[visit.Location], visit.Id)
+				break
+			}
+		}
+	}
+	mutexUserVisit.Unlock()
+}
+
+func remove(slice []int, s int) []int {
+	return append(slice[:s], slice[s+1:]...)
+}
+
+func GetAverage(locationId, fromDate, toDate, fromAge, toAge int, gender string) (float64, error) {
 	var avg float64 = 0
 
-	var marksSum uint8 = 0
-	var markCount int = 0
+	var marksSum = 0
+	var markCount = 0
 
-	for _, sl := range locationVisitMap[id] {
+	for _, visitId := range locationVisitMap[locationId] {
 
-		if fromDate != 0 && sl.Visit.VisitedAt <= fromDate {
+		visit, ok := visitMap[visitId]
+		if !ok {
 			continue
 		}
 
-		if toDate != 0 && sl.Visit.VisitedAt >= toDate {
+		if fromDate != 0 && visit.VisitedAt <= fromDate {
 			continue
 		}
 
-		if len(gender) != 0 && gender != sl.User.Gender {
+		if toDate != 0 && visit.VisitedAt >= toDate {
 			continue
 		}
 
-		if fromAge != 0 && fromAge*31557600 >= timeNow-sl.User.BirthDate {
+		user, ok := userMap[visit.User]
+		if !ok {
 			continue
 		}
 
-		if toAge != 0 && toAge <= int((timeNow-sl.User.BirthDate)/31557600) {
+		if len(gender) != 0 && user.Gender != gender {
 			continue
 		}
 
-		marksSum += sl.Visit.Mark
+		if fromAge != 0 && timeNow-user.BirthDate < fromAge*31557600 {
+			continue
+		}
+
+		if toAge != 0 && timeNow-user.BirthDate > toAge*31557600 {
+			continue
+		}
+
+		marksSum += visit.Mark
 		markCount++
 	}
 
@@ -99,29 +164,39 @@ func GetAverage(id, fromDate, toDate, fromAge, toAge int, gender string) (float6
 	return avg, nil
 }
 
-func SelectVisits(id, fromDate, toDate, toDistance int, country string) (UserVisitsSl, error) {
+func SelectVisits(userId, fromDate, toDate, toDistance int, country string) (UserVisitsSl, error) {
 	var userVisitsSl UserVisitsSl
 	var userVisits = UserVisitSt{}
 
-	for _, sl := range userVisitMap[id] {
+	for _, visitId := range userVisitMap[userId] {
 
-		if fromDate != 0 && sl.Visit.VisitedAt <= fromDate {
+		visit, ok := visitMap[visitId]
+		if !ok {
 			continue
 		}
 
-		if toDate != 0 && sl.Visit.VisitedAt >= toDate {
+		if fromDate != 0 && visit.VisitedAt <= fromDate {
 			continue
 		}
 
-		if len(country) != 0 && sl.Location.Country != country {
+		if toDate != 0 && visit.VisitedAt >= toDate {
 			continue
 		}
 
-		if toDistance != 0 && toDistance <= sl.Location.Distance {
+		location, ok := locationMap[visit.Location]
+		if !ok {
 			continue
 		}
 
-		userVisits = append(userVisits, UserVisit{sl.Visit.Mark, sl.Visit.VisitedAt, sl.Location.Place})
+		if len(country) != 0 && location.Country != country {
+			continue
+		}
+
+		if toDistance != 0 && location.Distance >= toDistance {
+			continue
+		}
+
+		userVisits = append(userVisits, UserVisit{visit.Mark, visit.VisitedAt, location.Place})
 	}
 
 	sort.Sort(userVisits)
@@ -130,7 +205,6 @@ func SelectVisits(id, fromDate, toDate, toDistance int, country string) (UserVis
 
 	return userVisitsSl, nil
 }
-
 
 //PanicOnErr panics on error
 func PanicOnErr(err error) {

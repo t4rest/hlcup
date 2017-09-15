@@ -19,10 +19,14 @@ type Visits struct {
 var visitMap = make(map[int]Visit)
 var mutexVisit = &sync.RWMutex{}
 
-func SetVisit(visit Visit) {
+func SetVisit(visit Visit, update bool) {
 	mutexVisit.Lock()
 	visitMap[visit.Id] = visit
 	mutexVisit.Unlock()
+
+	if !update {
+		SetVisits(visit)
+	}
 }
 
 func GetVisit(id int) (Visit, error) {
@@ -39,12 +43,8 @@ func GetVisit(id int) (Visit, error) {
 
 func InsertVisits(visits Visits) {
 	for _, visit := range visits.Visits {
-		InsertVisit(visit)
+		SetVisit(visit, false)
 	}
-}
-
-func InsertVisit(visit Visit) {
-	SetVisit(visit)
 }
 
 func UpdateVisit(visit Visit, visitNew Visit) int {
@@ -65,7 +65,9 @@ func UpdateVisit(visit Visit, visitNew Visit) int {
 		visit.Mark = visitNew.Mark
 	}
 
-	SetVisit(visit)
+	updateUsetLocationVisit(visit)
+
+	SetVisit(visit, true)
 
 	return 1
 }

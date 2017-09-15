@@ -17,7 +17,7 @@ type Users struct {
 	Users []User `json:"users"`
 }
 
-var userMap  =  make(map[int]User)
+var userMap = make(map[int]User)
 var mutexUser = &sync.RWMutex{}
 
 func SetUser(user User) {
@@ -40,17 +40,13 @@ func GetUser(id int) (User, error) {
 
 func InsertUsers(users Users) {
 	for _, user := range users.Users {
-		InsertUser(user)
+		SetUser(user)
 	}
 }
 
-func InsertUser(user User) {
-	SetUser(user)
-}
+func UpdateUser(user User, userNew User, birthDateUpdate bool) int {
 
-func UpdateUser(user User, userNew User) int {
-
-	if userNew.BirthDate != 0 {
+	if userNew.BirthDate != 0 || birthDateUpdate {
 		user.BirthDate = userNew.BirthDate
 	}
 
