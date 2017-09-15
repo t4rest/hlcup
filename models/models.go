@@ -10,14 +10,12 @@ var (
 	NotFound error = errors.New("NotFound")
 )
 
-type FloatPrecision5 float32
-
 var timeNow int
 
 func init() {
 	file, err := os.Open("/tmp/data/options.txt")
 	if err != nil {
-		file, err = os.Open("/home/andrey/go/src/hlcupdoc/data/FULL/data/options.txt")
+		file, err = os.Open("/Users/Adnrey/go/src/hlcupdocs/data/FULL/data/options.txt")
 		if err != nil {
 			PanicOnErr(err)
 		}

@@ -171,33 +171,32 @@ func GetAverage(id, fromDate, toDate, fromAge, toAge int, gender string) (float6
 }
 
 func SelectVisits(id, fromDate, toDate, toDistance int, country string) (UserVisitsSl, error) {
-	var userVisitsSl UserVisitsSl
-	var userVisits = UserVisitSt{}
+	userVisits := UserVisitSt{}
 
-	for _, sl := range userVisitMap[id] {
+	//for _, sl := range userVisitMap[id] {
 
-		if fromDate != 0 && sl.Visit.VisitedAt <= fromDate {
-			continue
-		}
+	//	if fromDate != 0 && sl.Visit.VisitedAt <= fromDate {
+	//		continue
+	//	}
 
-		if toDate != 0 && sl.Visit.VisitedAt >= toDate {
-			continue
-		}
+	//	if toDate != 0 && sl.Visit.VisitedAt >= toDate {
+	//		continue
+	//	}
 
-		if len(country) != 0 && sl.Location.Country != country {
-			continue
-		}
+	//	if len(country) != 0 && sl.Location.Country != country {
+	//		continue
+	//	}
 
-		if toDistance != 0 && toDistance <= sl.Location.Distance {
-			continue
-		}
+	//	if toDistance != 0 && toDistance <= sl.Location.Distance {
+	//		continue
+	//	}
 
-		userVisits = append(userVisits, UserVisit{sl.Visit.Mark, sl.Visit.VisitedAt, sl.Location.Place})
-	}
+	//	userVisits = append(userVisits, UserVisit{sl.Visit.Mark, sl.Visit.VisitedAt, sl.Location.Place})
+	//}
 
-	sort.Sort(userVisits)
+	//sort.Sort(userVisits)
 
-	userVisitsSl = UserVisitsSl{Visits: userVisits}
+	userVisitsSl := UserVisitsSl{Visits: userVisits}
 
 	return userVisitsSl, nil
 }

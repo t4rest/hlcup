@@ -13,7 +13,7 @@ func ImportDataFromZip() error {
 	var err error
 	r, err = zip.OpenReader("/tmp/data/data.zip")
 	if err != nil {
-		r, err = zip.OpenReader("/home/andrey/go/src/hlcupdoc/data/FULL/data/data.zip")
+		r, err = zip.OpenReader("/Users/Adnrey/go/src/hlcupdocs/data/FULL/data/Archive.zip")
 
 		if err != nil {
 			return err
